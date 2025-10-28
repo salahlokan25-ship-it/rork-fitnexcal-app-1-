@@ -436,7 +436,7 @@ export default function DashboardScreen() {
                 accessibilityLabel="Search for a food"
               />
               <TouchableOpacity style={dynamic.barcodeButton} onPress={() => router.push({ pathname: '/(tabs)/scan', params: { mealType: selectedMealType } })}>
-                <BarChart3 size={20} color={theme.colors.primary700} />
+                <BarChart3 size={20} color={theme.colors.primary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -461,7 +461,7 @@ export default function DashboardScreen() {
             onPress={() => router.push({ pathname: '/(tabs)/scan', params: { mealType: selectedMealType } })}
             testID="scan-from-search"
           >
-            <BarChart3 size={16} color={theme.colors.primary700} />
+            <BarChart3 size={16} color={theme.colors.primary} />
             <Text style={dynamic.scanPillText}>Scan</Text>
           </TouchableOpacity>
         </View>
@@ -495,7 +495,7 @@ export default function DashboardScreen() {
                           onPress={() => router.push({ pathname: '/(tabs)/scan', params: { mealType: selectedMealType } })}
                           testID={`scan-for-${(item as FoodItem).id}`}
                         >
-                          <BarChart3 size={16} color={theme.colors.primary700} />
+                          <BarChart3 size={16} color={theme.colors.primary} />
                           <Text style={dynamic.secondaryScanButtonText}>Scan</Text>
                         </TouchableOpacity>
                       </View>
@@ -539,7 +539,7 @@ export default function DashboardScreen() {
                   </View>
                 ) : (
                   <View style={dynamic.karmaImpactRow}>
-                    <Leaf size={18} color={theme.colors.primary700} />
+                    <Leaf size={18} color={theme.colors.primary} />
                     <Text style={dynamic.karmaImpactText}>Make healthy choices to unlock impact</Text>
                   </View>
                 )}
@@ -557,7 +557,7 @@ export default function DashboardScreen() {
             <Text style={dynamic.cardSubtitle}>Remaining = Goal - Food</Text>
 
             <View style={dynamic.calorieContent}>
-              <CircularProgress size={130} strokeWidth={10} progress={calorieProgress} color={theme.colors.primary700} backgroundColor={theme.colors.accent}>
+              <CircularProgress size={130} strokeWidth={10} progress={calorieProgress} color={theme.colors.primary} backgroundColor={theme.colors.primaryPale}>
                 <Text style={dynamic.remainingCalories}>{remainingCalories}</Text>
                 <Text style={dynamic.remainingLabel}>Remaining</Text>
               </CircularProgress>
@@ -690,7 +690,7 @@ export default function DashboardScreen() {
           <View style={dynamic.voiceCard}>
             <View style={dynamic.voiceLeft}>
               <View style={dynamic.micCircle}>
-                <Mic size={22} color={theme.colors.primary700} />
+                <Mic size={22} color={theme.colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={dynamic.voiceTitle}>Log by voice</Text>
@@ -1029,7 +1029,7 @@ export default function DashboardScreen() {
         <TouchableOpacity style={dynamic.modalOverlay} activeOpacity={1} onPress={() => setShowCrossDayModal(false)}>
           <TouchableOpacity style={dynamic.voiceModalContent} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
             <View style={dynamic.voiceModalHeader}>
-              <ArrowLeftRight size={24} color={theme.colors.primary700} />
+              <ArrowLeftRight size={24} color={theme.colors.primary} />
               <Text style={dynamic.voiceModalTitle}>Move calories across days</Text>
             </View>
             <Text style={dynamic.voiceModalLabel}>From date (YYYY-MM-DD)</Text>
@@ -1094,7 +1094,7 @@ export default function DashboardScreen() {
         <TouchableOpacity style={dynamic.modalOverlay} activeOpacity={1} onPress={() => setMoodModal(false)}>
           <TouchableOpacity style={dynamic.voiceModalContent} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
             <View style={dynamic.voiceModalHeader}>
-              <Smile size={28} color={theme.colors.primary700} />
+              <Smile size={28} color={theme.colors.primary} />
               <Text style={dynamic.voiceModalTitle}>Log mood</Text>
             </View>
 
@@ -1109,7 +1109,7 @@ export default function DashboardScreen() {
                 { key: 'neutral', Icon: Meh },
               ] as { key: MoodEmotion; Icon: any }[]).map(({ key, Icon }) => (
                 <TouchableOpacity key={key} style={[dynamic.emotionPill, selectedEmotion === key && dynamic.emotionPillActive]} onPress={() => setSelectedEmotion(key)} testID={`mood-${key}`}>
-                  <Icon size={16} color={selectedEmotion === key ? theme.colors.primary700 : theme.colors.textMuted} />
+                  <Icon size={16} color={selectedEmotion === key ? theme.colors.primary : theme.colors.textMuted} />
                   <Text style={[dynamic.emotionText, selectedEmotion === key && dynamic.emotionTextActive]}>{key}</Text>
                 </TouchableOpacity>
               ))}
@@ -1170,7 +1170,7 @@ export default function DashboardScreen() {
         <TouchableOpacity style={dynamic.modalOverlay} activeOpacity={1} onPress={() => setShowEmotionSuggest(false)}>
           <TouchableOpacity style={dynamic.voiceModalContent} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
             <View style={dynamic.voiceModalHeader}>
-              <Sparkles size={24} color={theme.colors.primary700} />
+              <Sparkles size={24} color={theme.colors.primary} />
               <Text style={dynamic.voiceModalTitle}>Feel-based suggestions</Text>
             </View>
             <View style={dynamic.emotionRow}>
@@ -1223,7 +1223,7 @@ export default function DashboardScreen() {
         <TouchableOpacity style={dynamic.modalOverlay} activeOpacity={1} onPress={() => setShowMoodReport(false)}>
           <TouchableOpacity style={dynamic.voiceModalContent} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
             <View style={dynamic.voiceModalHeader}>
-              <Smile size={24} color={theme.colors.primary700} />
+              <Smile size={24} color={theme.colors.primary} />
               <Text style={dynamic.voiceModalTitle}>Mood report</Text>
             </View>
             {lastSavedEmotion && (
@@ -1296,7 +1296,7 @@ export default function DashboardScreen() {
         <TouchableOpacity style={dynamic.modalOverlay} activeOpacity={1} onPress={() => setShowVoiceModal(false)}>
           <TouchableOpacity style={dynamic.voiceModalContent} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
             <View style={dynamic.voiceModalHeader}>
-              <Mic size={28} color={theme.colors.primary700} />
+              <Mic size={28} color={theme.colors.primary} />
               <Text style={dynamic.voiceModalTitle}>Voice Food Logger</Text>
             </View>
 
@@ -1320,7 +1320,7 @@ export default function DashboardScreen() {
                   onPress={isRecording ? stopRecordingWeb : startRecordingWeb}
                   testID="voice-modal-record"
                 >
-                  {isRecording ? <Square size={16} color="#EF4444" /> : <AudioLines size={16} color={theme.colors.primary700} />}
+                  {isRecording ? <Square size={16} color="#EF4444" /> : <AudioLines size={16} color={theme.colors.primary} />}
                   <Text style={[dynamic.voiceSecondaryText, isRecording ? { color: '#EF4444' } : undefined]}>
                     {isRecording ? 'Stop' : 'Record'}
                   </Text>
@@ -1450,7 +1450,7 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   brandText: {
     fontSize: 22,
     fontWeight: '800',
-    color: Theme.colors.primary700,
+    color: Theme.colors.primary,
     letterSpacing: -0.3,
   },
   calendarWeek: {
@@ -1471,8 +1471,8 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     borderColor: Theme.colors.border,
   },
   dayItemActive: {
-    backgroundColor: Theme.colors.primary700,
-    borderColor: Theme.colors.primary700,
+    backgroundColor: Theme.colors.black,
+    borderColor: Theme.colors.black,
   },
   dayInitial: {
     fontSize: 13,
@@ -1508,7 +1508,7 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   karmaHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   karmaTitle: { fontSize: 18, fontWeight: '800', color: Theme.colors.text },
   karmaUnitsPill: { backgroundColor: Theme.colors.accent, borderWidth: 1, borderColor: Theme.colors.border, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-  karmaUnitsText: { fontSize: 12, fontWeight: '800', color: Theme.colors.primary700 },
+  karmaUnitsText: { fontSize: 12, fontWeight: '800', color: Theme.colors.primary },
   karmaBodyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   karmaLeft: { flex: 1, paddingRight: 12 },
   karmaSubtitle: { fontSize: 12, color: Theme.colors.textMuted, marginBottom: 4 },
@@ -1517,21 +1517,15 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   karmaImpactText: { flex: 1, color: Theme.colors.text, fontSize: 13 },
   karmaTodayRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   karmaTodayText: { fontSize: 12, color: Theme.colors.textMuted },
-  karmaRightIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: Theme.colors.primary700, alignItems: 'center', justifyContent: 'center' },
+  karmaRightIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: Theme.colors.primary, alignItems: 'center', justifyContent: 'center' },
 
   calorieCard: {
-    backgroundColor: Theme.colors.primary700,
+    backgroundColor: Theme.colors.black,
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 24,
-    shadowColor: Theme.shadow.soft.shadowColor,
-    shadowOffset: Theme.shadow.soft.shadowOffset,
-    shadowOpacity: Theme.shadow.soft.shadowOpacity,
-    shadowRadius: Theme.shadow.soft.shadowRadius,
-    elevation: Theme.shadow.soft.elevation,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
+    ...Theme.shadow.card,
   },
   cardTitle: {
     fontSize: 20,

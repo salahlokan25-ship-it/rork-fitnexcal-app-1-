@@ -2,28 +2,54 @@ export type ThemeType = {
   colors: {
     background: string;
     surface: string;
+    offWhite: string;
+    lightGray: string;
+    
     primary: string;
-    primary700: string;
-    primary600: string;
-    primary500: string;
-    primary300: string;
-    accent: string;
+    primaryLight: string;
+    primaryPale: string;
+    
+    black: string;
+    darkGray: string;
+    mediumGray: string;
+    borderGray: string;
+    
     text: string;
     textMuted: string;
     border: string;
-    cardShadow: string;
+    
+    red: string;
+    coral: string;
+    orange: string;
+    wheat: string;
+    green: string;
+    
     success: string;
+    error: string;
     warning: string;
-    danger: string;
+    info: string;
   };
-  radii: {
-    xs: number;
-    sm: number;
-    md: number;
-    lg: number;
-    xl: number;
-    full: number;
+  
+  typography: {
+    hero: number;
+    h1: number;
+    h2: number;
+    h3: number;
+    h4: number;
+    body: number;
+    bodySmall: number;
+    caption: number;
+    micro: number;
   };
+  
+  fontWeights: {
+    regular: '400';
+    medium: '500';
+    semibold: '600';
+    bold: '700';
+    heavy: '800';
+  };
+  
   spacing: {
     xs: number;
     sm: number;
@@ -31,16 +57,50 @@ export type ThemeType = {
     lg: number;
     xl: number;
     xxl: number;
+    xxxl: number;
   };
+  
+  radii: {
+    none: number;
+    sm: number;
+    md: number;
+    lg: number;
+    xl: number;
+    xxl: number;
+    full: number;
+    pill: number;
+  };
+  
   shadow: {
-    soft: {
+    sm: {
       shadowColor: string;
       shadowOffset: { width: number; height: number };
       shadowOpacity: number;
       shadowRadius: number;
       elevation: number;
     };
-    medium: {
+    md: {
+      shadowColor: string;
+      shadowOffset: { width: number; height: number };
+      shadowOpacity: number;
+      shadowRadius: number;
+      elevation: number;
+    };
+    lg: {
+      shadowColor: string;
+      shadowOffset: { width: number; height: number };
+      shadowOpacity: number;
+      shadowRadius: number;
+      elevation: number;
+    };
+    card: {
+      shadowColor: string;
+      shadowOffset: { width: number; height: number };
+      shadowOpacity: number;
+      shadowRadius: number;
+      elevation: number;
+    };
+    modal: {
       shadowColor: string;
       shadowOffset: { width: number; height: number };
       shadowOpacity: number;
@@ -52,38 +112,112 @@ export type ThemeType = {
 
 export const Theme: ThemeType = {
   colors: {
-    background: '#E9ECEF',
+    background: '#F8F8F8',
     surface: '#FFFFFF',
-    primary: '#0A84FF',
-    primary700: '#0066FF',
-    primary600: '#0A7BFF',
-    primary500: '#1EA0FF',
-    primary300: '#74C1FF',
-    accent: '#EEF5FF',
-    text: '#0F172A',
-    textMuted: '#667085',
-    border: 'rgba(15, 23, 42, 0.06)',
-    cardShadow: 'rgba(10, 132, 255, 0.25)',
-    success: '#22C55E',
-    warning: '#F59E0B',
-    danger: '#EF4444',
+    offWhite: '#F8F8F8',
+    lightGray: '#F5F5F7',
+    
+    primary: '#4A90E2',
+    primaryLight: '#6BA3E8',
+    primaryPale: '#E8F4FF',
+    
+    black: '#000000',
+    darkGray: '#1A1A1A',
+    mediumGray: '#8E8E93',
+    borderGray: '#E5E5EA',
+    
+    text: '#000000',
+    textMuted: '#8E8E93',
+    border: '#E5E5EA',
+    
+    red: '#FF6B6B',
+    coral: '#FF8A80',
+    orange: '#FFB74D',
+    wheat: '#F4A460',
+    green: '#4CAF50',
+    
+    success: '#4CAF50',
+    error: '#FF3B30',
+    warning: '#FF9500',
+    info: '#007AFF',
   },
-  radii: { xs: 8, sm: 12, md: 16, lg: 20, xl: 24, full: 999 },
-  spacing: { xs: 6, sm: 10, md: 14, lg: 20, xl: 24, xxl: 32 },
+  
+  typography: {
+    hero: 64,
+    h1: 34,
+    h2: 28,
+    h3: 22,
+    h4: 20,
+    body: 17,
+    bodySmall: 15,
+    caption: 13,
+    micro: 11,
+  },
+  
+  fontWeights: {
+    regular: '400' as const,
+    medium: '500' as const,
+    semibold: '600' as const,
+    bold: '700' as const,
+    heavy: '800' as const,
+  },
+  
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+    xxl: 48,
+    xxxl: 64,
+  },
+  
+  radii: {
+    none: 0,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    xxl: 24,
+    full: 999,
+    pill: 9999,
+  },
+  
   shadow: {
-    soft: {
+    sm: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 3,
+      elevation: 2,
+    },
+    md: {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.08,
       shadowRadius: 12,
-      elevation: 5,
+      elevation: 4,
     },
-    medium: {
+    lg: {
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 6 },
+      shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.12,
-      shadowRadius: 14,
+      shadowRadius: 24,
       elevation: 6,
+    },
+    card: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.04,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    modal: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 16 },
+      shadowOpacity: 0.16,
+      shadowRadius: 48,
+      elevation: 10,
     },
   },
 };
