@@ -6,9 +6,6 @@
     "start": "bunx rork start -p ef5fyqwupljgv1y0l0rzp --tunnel",
     "start-web": "bunx rork start -p ef5fyqwupljgv1y0l0rzp --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p ef5fyqwupljgv1y0l0rzp --web --tunnel",
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
     "lint": "expo lint"
   },
   "dependencies": {
