@@ -421,25 +421,6 @@ export default function DashboardScreen() {
           </View>
         </AnimatedFadeIn>
 
-        <AnimatedFadeIn delay={270}>
-          <View style={dynamic.workoutButtonsContainer}>
-            <TouchableOpacity 
-              style={dynamic.workoutAddButton}
-              onPress={() => router.push('/log-exercise')}
-              testID="workout-add-button"
-            >
-              <Plus size={24} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={dynamic.workoutMetButton}
-              onPress={() => router.push('/log-exercise')}
-              testID="workout-met-button"
-            >
-              <Text style={dynamic.workoutMetText}>MET</Text>
-            </TouchableOpacity>
-          </View>
-        </AnimatedFadeIn>
-
         <TouchableOpacity style={dynamic.quickAddButton} onPress={() => handleJumpToSearch()} testID="quick-add-button">
           <Plus size={24} color="white" />
           <Text style={dynamic.quickAddText}>Add Food</Text>
@@ -1237,46 +1218,7 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     fontWeight: '700',
     color: '#EA580C',
   },
-  workoutButtonsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginHorizontal: 20,
-    marginBottom: 24,
-  },
-  workoutAddButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: Theme.colors.primary700,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Theme.colors.cardShadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  workoutMetButton: {
-    flex: 1,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Theme.colors.border,
-    shadowColor: Theme.shadow.soft.shadowColor,
-    shadowOffset: Theme.shadow.soft.shadowOffset,
-    shadowOpacity: Theme.shadow.soft.shadowOpacity,
-    shadowRadius: Theme.shadow.soft.shadowRadius,
-    elevation: Theme.shadow.soft.elevation,
-  },
-  workoutMetText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Theme.colors.text,
-  },
+
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
