@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Send, Bot, User } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ArrowLeft, MoreVertical, Camera, Mic, ArrowUp } from 'lucide-react-native';
 import { askNutritionQuestion } from '@/services/ai-service';
 import { useUser } from '@/hooks/user-store';
 import { useNutrition } from '@/hooks/nutrition-store';
-import { useTheme } from '@/hooks/theme';
+import { useRouter } from 'expo-router';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -14,25 +14,32 @@ interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
+  imageUrl?: string;
+  recipeCard?: {
+    title: string;
+    description: string;
+    calories: string;
+    imageUrl: string;
+  };
 }
 
-const QUICK_QUESTIONS = [
-  "What should I eat for breakfast?",
-  "How can I increase my protein intake?",
-  "What are healthy snack options?",
-  "How do I meal prep effectively?",
+const QUICK_ACTIONS = [
+  "Analyze my lunch",
+  "Create a meal plan",
+  "Is an avocado healthy?",
 ];
 
 const chatKeyFor = (email?: string | null) => `chat_history:${email?.toLowerCase() ?? 'guest'}`;
 
 export default function ChatScreen() {
-  const { theme } = useTheme();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, authUser } = useUser();
   const { dailyNutrition } = useNutrition();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: `Hi ${user?.name || 'there'}! I'm your AI nutrition assistant. I can help you with meal planning, nutrition advice, and answer any food-related questions you have. What would you like to know?`,
+      text: `Hello! I'm NutriPal, your personal nutrition assistant. Ask me anything about food, calories, or meal plans to get started!`,
       isUser: false,
       timestamp: new Date(),
     }
@@ -87,6 +94,10 @@ export default function ChatScreen() {
     setInputText('');
     setIsLoading(true);
 
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+
     try {
       const userContext = user && dailyNutrition ? {
         goal: user.goal,
@@ -104,7 +115,7 @@ export default function ChatScreen() {
       };
 
       setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
+    } catch {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: "I'm sorry, I'm having trouble responding right now. Please try again in a moment.",
@@ -117,137 +128,255 @@ export default function ChatScreen() {
       setIsLoading(false);
     }
 
-    // Scroll to bottom
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
   };
 
-  const handleQuickQuestion = (question: string) => {
-    sendMessage(question);
+  const handleQuickAction = (action: string) => {
+    sendMessage(action);
   };
 
-  const dynamic = stylesWithTheme(theme);
+  const TypingIndicator = () => {
+    const dot1 = useRef(new Animated.Value(0)).current;
+    const dot2 = useRef(new Animated.Value(0)).current;
+    const dot3 = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+      const animate = (dot: Animated.Value, delay: number) => {
+        Animated.loop(
+          Animated.sequence([
+            Animated.delay(delay),
+            Animated.timing(dot, {
+              toValue: 1,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(dot, {
+              toValue: 0,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+          ])
+        ).start();
+      };
+
+      animate(dot1, 0);
+      animate(dot2, 150);
+      animate(dot3, 300);
+    }, [dot1, dot2, dot3]);
+
+    return (
+      <View style={styles.typingContainer}>
+        <Animated.View style={[styles.typingDot, { opacity: dot1 }]} />
+        <Animated.View style={[styles.typingDot, { opacity: dot2 }]} />
+        <Animated.View style={[styles.typingDot, { opacity: dot3 }]} />
+      </View>
+    );
+  };
 
   return (
-    <SafeAreaView style={dynamic.container}>
-      <View style={dynamic.header}>
-        <Bot size={24} color="#007AFF" />
-        <Text style={dynamic.title}>Nutrition Assistant</Text>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <TouchableOpacity 
+          style={styles.headerButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#ffffff" opacity={0.8} />
+        </TouchableOpacity>
+        
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>NutriPal</Text>
+          <Text style={styles.headerStatus}>Online</Text>
+        </View>
+
+        <TouchableOpacity style={styles.headerButton}>
+          <MoreVertical size={24} color="#ffffff" opacity={0.8} />
+        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView 
-        style={dynamic.content}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.content}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <ScrollView
           ref={scrollViewRef}
-          style={dynamic.messagesContainer}
-          contentContainerStyle={dynamic.messagesContent}
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
         >
           {messages.map((message) => (
             <View
               key={message.id}
               style={[
-                dynamic.messageContainer,
-                message.isUser ? dynamic.userMessageContainer : dynamic.aiMessageContainer
+                styles.messageRow,
+                message.isUser ? styles.userMessageRow : styles.aiMessageRow
               ]}
             >
-              <View style={dynamic.messageHeader}>
-                {message.isUser ? (
-                  <User size={16} color="#007AFF" />
-                ) : (
-                  <Bot size={16} color="#007AFF" />
-                )}
-                <Text style={dynamic.messageTime}>
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-              </View>
-              
+              {!message.isUser && (
+                <View style={styles.avatarContainer}>
+                  <Image 
+                    source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCTBoNXFyX_aMzR99zwqsPjj_08-iJrFLVwdXfmcHjaD97Qgh68ufTdmmx1s9CnEunvYjzXL22bl9C-51km3sjBibH99RLx2wczB-FSkHdw-4ws8BGI9xMzZlsGxNoXlgq4Moo6dgO3MeeeXL2xuQ-Fy4ALSkLDXxDja8ba19CLNxzmNhp9x6LqOeCdc4Y9CAJuPBX2y-NV8JT6cnogViXWLiIQohgSQFRcqgrV2UwLR8jyp9rPNKoiCZnNab_ZAgpXijRr4iMHMDHW' }}
+                    style={styles.avatar}
+                  />
+                </View>
+              )}
+
               <View style={[
-                dynamic.messageBubble,
-                message.isUser ? dynamic.userMessageBubble : dynamic.aiMessageBubble
+                styles.messageContent,
+                message.isUser ? styles.userMessageContent : styles.aiMessageContent
               ]}>
-                <Text style={[
-                  dynamic.messageText,
-                  message.isUser ? dynamic.userMessageText : dynamic.aiMessageText
-                ]}>
-                  {message.text}
+                <Text style={styles.messageLabel}>
+                  {message.isUser ? 'You' : 'NutriPal'}
                 </Text>
+                
+                <View style={[
+                  styles.messageBubble,
+                  message.isUser ? styles.userMessageBubble : styles.aiMessageBubble
+                ]}>
+                  <Text style={styles.messageText}>
+                    {message.text}
+                  </Text>
+                </View>
+
+                {message.recipeCard && (
+                  <View style={styles.recipeCard}>
+                    <Image 
+                      source={{ uri: message.recipeCard.imageUrl }}
+                      style={styles.recipeImage}
+                    />
+                    <View style={styles.recipeContent}>
+                      <Text style={styles.recipeTitle}>{message.recipeCard.title}</Text>
+                      <Text style={styles.recipeDescription}>{message.recipeCard.description}</Text>
+                      <Text style={styles.recipeCalories}>{message.recipeCard.calories}</Text>
+                      <TouchableOpacity style={styles.recipeButton}>
+                        <Text style={styles.recipeButtonText}>Log this meal</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
               </View>
+
+              {message.isUser && (
+                <View style={styles.avatarContainer}>
+                  <Image 
+                    source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCdFMHRodOLZI3yTTEvgbXHl0_KG-gSgpoPg7Z9fJO2q2KTJJzdiYBAXP-VDKR1Eja8bC2Hq0-G18uuXIvYHp8Ojt00vuq6fMTzNN9if8e_DGadMhYyC2Q3xXEvAXQWP6SEw0dttc7sLgDnRLBkhhN2k4Q_yGeaMZZNX9R05NiiWYjNALD2apaiWLXehmTUvENLqQsCQI-mkvkVAtrIM1ET83L9ZBRCfBE0kq9hWbAC7UIwHzJBiagEvvhiQGQZ56WpoDbU5HAhrzdK' }}
+                    style={styles.avatar}
+                  />
+                </View>
+              )}
             </View>
           ))}
 
           {isLoading && (
-            <View style={dynamic.loadingContainer}>
-              <View style={dynamic.loadingBubble}>
-                <Text style={dynamic.loadingText}>Thinking...</Text>
+            <View style={[styles.messageRow, styles.aiMessageRow]}>
+              <View style={styles.avatarContainer}>
+                <Image 
+                  source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB88P60yXhhIa8FujadOBFGQM_-l9j8NvAZQanO6dGx3kK57k3RoOQMaMmMTorm_SM7Qh4nOP0n5X_h73bknrMI8VvE30K07S_mAannxnyTrzkfLr4zrZilceLK_fQrl_zVFUmv2fqF5ZN7JBhPKGHrZFLKzRY3qhfHtbZqNp1J6O4S4mcBGaHmxD5g_2RY2FpqUkcz8j4DpqDuyG_X6IdIeaMo_NoINm-7bX14_y1R2zMh3OGP9MSw9DaWQuXbKCwt3XRsXVmg9Pdx' }}
+                  style={styles.avatar}
+                />
               </View>
-            </View>
-          )}
-
-          {/* Quick Questions */}
-          {messages.length === 1 && (
-            <View style={dynamic.quickQuestionsContainer}>
-              <Text style={dynamic.quickQuestionsTitle}>Quick Questions:</Text>
-              {QUICK_QUESTIONS.map((question, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={dynamic.quickQuestionButton}
-                  onPress={() => handleQuickQuestion(question)}
-                >
-                  <Text style={dynamic.quickQuestionText}>{question}</Text>
-                </TouchableOpacity>
-              ))}
+              <View style={styles.messageContent}>
+                <View style={styles.loadingBubble}>
+                  <TypingIndicator />
+                </View>
+              </View>
             </View>
           )}
         </ScrollView>
 
-        <View style={dynamic.inputContainer}>
-          <TextInput
-            style={dynamic.textInput}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Ask me anything about nutrition..."
-            multiline
-            maxLength={500}
-            editable={!isLoading}
-          />
-          <TouchableOpacity
-            style={[dynamic.sendButton, (!inputText.trim() || isLoading) && dynamic.sendButtonDisabled]}
-            onPress={() => sendMessage(inputText)}
-            disabled={!inputText.trim() || isLoading}
+        <View style={styles.inputSection}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.quickActions}
+            contentContainerStyle={styles.quickActionsContent}
           >
-            <Send size={20} color={(!inputText.trim() || isLoading) ? '#ccc' : '#007AFF'} />
-          </TouchableOpacity>
+            {QUICK_ACTIONS.map((action, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.quickActionButton}
+                onPress={() => handleQuickAction(action)}
+                disabled={isLoading}
+              >
+                <Text style={styles.quickActionText}>{action}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <View style={styles.inputContainer}>
+            <TouchableOpacity style={styles.iconButton}>
+              <Camera size={24} color="#ffffff" opacity={0.8} />
+            </TouchableOpacity>
+
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.textInput}
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder="Ask about food or a meal..."
+                placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                multiline
+                maxLength={500}
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendButtonDisabled]}
+                onPress={() => sendMessage(inputText)}
+                disabled={!inputText.trim() || isLoading}
+              >
+                <ArrowUp size={24} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.iconButton}>
+              <Mic size={24} color="#ffffff" opacity={0.8} />
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({});
-
-const stylesWithTheme = (Theme: any) => StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background,
+    backgroundColor: '#111318',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: Theme.colors.surface,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border,
-    gap: 12,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Theme.colors.text,
+  headerButton: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 24,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: -0.015,
+  },
+  headerStatus: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(59, 130, 246, 0.6)',
+    marginTop: 2,
   },
   content: {
     flex: 1,
@@ -257,118 +386,180 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   },
   messagesContent: {
     padding: 16,
+    gap: 24,
   },
-  messageContainer: {
-    marginBottom: 16,
-  },
-  userMessageContainer: {
-    alignItems: 'flex-end',
-  },
-  aiMessageContainer: {
-    alignItems: 'flex-start',
-  },
-  messageHeader: {
+  messageRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-    gap: 6,
+    gap: 12,
+    marginBottom: 24,
   },
-  messageTime: {
-    fontSize: 12,
-    color: Theme.colors.textMuted,
+  userMessageRow: {
+    justifyContent: 'flex-end',
   },
-  messageBubble: {
-    maxWidth: '80%',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+  aiMessageRow: {
+    justifyContent: 'flex-start',
+  },
+  avatarContainer: {
+    width: 40,
+    height: 40,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
   },
+  messageContent: {
+    flex: 1,
+    maxWidth: '75%',
+    gap: 4,
+  },
+  userMessageContent: {
+    alignItems: 'flex-end',
+  },
+  aiMessageContent: {
+    alignItems: 'flex-start',
+  },
+  messageLabel: {
+    fontSize: 13,
+    color: 'rgba(59, 130, 246, 0.6)',
+    fontWeight: '400',
+  },
+  messageBubble: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
   userMessageBubble: {
-    backgroundColor: '#007AFF',
-    borderBottomRightRadius: 4,
+    backgroundColor: '#3B82F6',
   },
   aiMessageBubble: {
-    backgroundColor: '#007AFF',
-    borderBottomLeftRadius: 4,
+    backgroundColor: '#1e232b',
   },
   messageText: {
     fontSize: 16,
+    color: '#ffffff',
     lineHeight: 22,
   },
-  userMessageText: {
-    color: 'white',
-  },
-  aiMessageText: {
-    color: 'white',
-  },
-  loadingContainer: {
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
   loadingBubble: {
-    backgroundColor: Theme.colors.surface,
+    backgroundColor: '#1e232b',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 20,
-    borderBottomLeftRadius: 4,
+    borderRadius: 12,
   },
-  loadingText: {
-    fontSize: 16,
-    color: Theme.colors.textMuted,
-    fontStyle: 'italic',
+  typingContainer: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
   },
-  quickQuestionsContainer: {
-    marginTop: 20,
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
-  quickQuestionsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Theme.colors.text,
+  recipeCard: {
+    marginTop: 8,
+    backgroundColor: '#1e232b',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  recipeImage: {
+    width: '100%',
+    height: 150,
+  },
+  recipeContent: {
+    padding: 16,
+    gap: 8,
+  },
+  recipeTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: -0.015,
+  },
+  recipeDescription: {
+    fontSize: 14,
+    color: 'rgba(59, 130, 246, 0.6)',
+  },
+  recipeCalories: {
+    fontSize: 14,
+    color: 'rgba(59, 130, 246, 0.6)',
+  },
+  recipeButton: {
+    marginTop: 8,
+    backgroundColor: '#3B82F6',
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  recipeButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  inputSection: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  quickActions: {
     marginBottom: 12,
   },
-  quickQuestionButton: {
-    backgroundColor: Theme.colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
+  quickActionsContent: {
+    gap: 8,
   },
-  quickQuestionText: {
+  quickActionButton: {
+    backgroundColor: '#1e232b',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  quickActionText: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#ffffff',
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: Theme.colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: Theme.colors.border,
-    gap: 12,
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#1e232b',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputWrapper: {
+    flex: 1,
+    position: 'relative',
   },
   textInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-    borderRadius: 20,
-    paddingHorizontal: 16,
+    backgroundColor: '#1e232b',
+    color: '#ffffff',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingRight: 52,
     paddingVertical: 12,
     fontSize: 16,
+    minHeight: 48,
     maxHeight: 100,
-    backgroundColor: Theme.colors.accent,
-    color: Theme.colors.text,
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
+    position: 'absolute',
+    right: 6,
+    top: 6,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#3B82F6',
     alignItems: 'center',
-    backgroundColor: '#f0f8ff',
+    justifyContent: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#f5f5f5',
+    opacity: 0.5,
   },
 });
