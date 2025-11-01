@@ -115,7 +115,7 @@ function RootLayoutNav() {
       <Tabs.Screen
         name="mind"
         options={{
-          title: 'Mind',
+          title: 'Mindfulness',
           tabBarIcon: ({ color, size }) => <Brain color={color} size={size} />,
         }}
       />
