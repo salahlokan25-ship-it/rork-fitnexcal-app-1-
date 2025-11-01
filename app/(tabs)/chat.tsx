@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image, Animated, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MoreVertical, Camera, Mic, ArrowUp } from 'lucide-react-native';
 import { askNutritionQuestion } from '@/services/ai-service';
@@ -177,13 +177,6 @@ export default function ChatScreen() {
 
   return (
     <View style={styles.container}>
-      <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop' }}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      >
-        <View style={styles.backgroundOverlay} />
-      </ImageBackground>
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <TouchableOpacity 
           style={styles.headerButton}
@@ -351,19 +344,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#111318',
-  },
-  backgroundImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-  },
-  backgroundOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(17, 19, 24, 0.92)',
   },
   header: {
     flexDirection: 'row',
