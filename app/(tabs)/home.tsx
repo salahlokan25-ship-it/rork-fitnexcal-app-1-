@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, FlatLi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/theme';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, TrendingUp, Target, Search, BarChart3, Drumstick, Wheat, Egg, Zap, Clock, ArrowLeftRight, Wallet } from 'lucide-react-native';
+import { Plus, TrendingUp, Target, Search, BarChart3, Drumstick, Wheat, Egg, Zap, Clock, ArrowLeftRight, Wallet, Settings, Mic, ChevronLeft, ChevronRight, ChevronDown, ScanBarcode } from 'lucide-react-native';
 import { useUser } from '@/hooks/user-store';
 import { useNutrition } from '@/hooks/nutrition-store';
 import { useWorkout } from '@/hooks/workout-store';
@@ -22,18 +22,23 @@ function getWeekDays() {
   const today = new Date();
   const currentDay = today.getDay();
   const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - currentDay);
+  startOfWeek.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1));
 
   return Array.from({ length: 7 }, (_, i) => {
     const date = new Date(startOfWeek);
     date.setDate(startOfWeek.getDate() + i);
-    const dayInitials = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const dayInitials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return {
       initial: dayInitials[i],
       date: date.getDate(),
       isToday: date.toDateString() === today.toDateString(),
     };
   });
+}
+
+function getMonthYear() {
+  const today = new Date();
+  return today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
 export default function DashboardScreen() {
@@ -49,6 +54,7 @@ export default function DashboardScreen() {
   const [toMeal, setToMeal] = useState<MealType>('dinner');
   const [moveCalories, setMoveCalories] = useState<string>('200');
   const [showStreakModal, setShowStreakModal] = useState<boolean>(false);
+  const [expandedMeal, setExpandedMeal] = useState<MealType | null>(null);
 
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
@@ -119,380 +125,298 @@ export default function DashboardScreen() {
     snack: dailyNutrition.meals.filter((m) => m.meal_type === 'snack'),
   } as const;
 
+  const mealIcons = {
+    breakfast: '🍳',
+    lunch: '🥗',
+    dinner: '🍝',
+    snack: '🥨',
+  } as const;
+
+  const getMealCalories = (mealType: MealType) => {
+    return mealsByType[mealType].reduce((sum, meal) => sum + (meal.food_item?.calories || 0) * meal.quantity, 0);
+  };
+
   return (
-    <View style={[dynamic.container, { paddingTop: insets.top }]}> 
-      <ScrollView ref={scrollRef} style={dynamic.scrollView} showsVerticalScrollIndicator={false} testID="home-scroll">
-        <AnimatedFadeIn delay={50}>
-          <View style={dynamic.header}>
-            <View style={dynamic.brandRow}>
-              <Image
-                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/5gxbp9ngwu9gz1ijle4ku' }}
-                style={dynamic.appLogo}
-                resizeMode="contain"
-                accessibilityLabel="App logo"
-                testID="home-app-logo"
-              />
-              <Text style={dynamic.brandText} testID="brand-title" accessibilityLabel="FitnexCal brand">FitnexCal</Text>
-            </View>
-            <Text style={dynamic.greeting}>Hello, {user.name}!</Text>
-            
-            <TouchableOpacity 
-              style={dynamic.streakBadge}
-              onPress={() => setShowStreakModal(true)}
-              testID="streak-badge"
-            >
-              <Text style={dynamic.streakEmoji}>🔥</Text>
-              <Text style={dynamic.streakNumber}>{streakData.currentStreak}</Text>
-            </TouchableOpacity>
+    <View style={[dynamic.container, { paddingTop: insets.top, backgroundColor: theme.colors.background }]}> 
+      <View style={dynamic.headerBar}>
+        <View style={dynamic.avatarWrapper}>
+          {user.avatar_url ? (
+            <Image source={{ uri: user.avatar_url }} style={dynamic.avatar} />
+          ) : (
+            <View style={dynamic.avatarPlaceholder} />
+          )}
+        </View>
+        <Text style={dynamic.headerTitle}>Home</Text>
+        <TouchableOpacity 
+          style={dynamic.settingsBtn}
+          onPress={() => router.push('/(tabs)/settings')}
+          testID="settings-btn"
+        >
+          <Settings size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+      </View>
 
-            <View style={dynamic.calendarWeek}>
-              {getWeekDays().map((day, index) => {
-                const isToday = day.isToday;
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    style={[dynamic.dayItem, isToday && dynamic.dayItemActive]}
-                    testID={`day-${index}`}
-                  >
-                    <Text style={[dynamic.dayInitial, isToday && dynamic.dayInitialActive]}>{day.initial}</Text>
-                    <Text style={[dynamic.dayNumber, isToday && dynamic.dayNumberActive]}>{day.date}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        </AnimatedFadeIn>
-
-        {healthAlerts.length > 0 && (
-          <AnimatedFadeIn delay={30}>
-            <View style={dynamic.alertsCard} testID="health-alerts">
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={dynamic.alertsTitle}>Health alerts</Text>
-                <TouchableOpacity onPress={clearHealthAlerts} style={dynamic.alertsClearBtn} testID="health-alerts-clear">
-                  <Text style={dynamic.alertsClearText}>Clear</Text>
-                </TouchableOpacity>
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {healthAlerts.slice(0, 4).map((a) => (
-                  <View key={a.id} style={[dynamic.alertPill, a.severity === 'critical' ? dynamic.alertPillCritical : dynamic.alertPillWarn]}>
-                    <Text style={dynamic.alertPillTitle}>{a.title}</Text>
-                    <Text style={dynamic.alertPillDesc}>{a.message}</Text>
-                    <Text style={dynamic.alertFoodName}>Item: {a.food.name}</Text>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          </AnimatedFadeIn>
-        )}
-
-        <AnimatedFadeIn delay={120}>
-          <View style={dynamic.searchContainer}>
-            <View style={dynamic.searchBar}>
-              <Search size={20} color="#666" />
-              <TextInput
-                ref={searchInputRef}
-                style={dynamic.searchInput}
-                placeholder="Search for a food"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                returnKeyType="search"
-                testID="home-search-input"
-                accessibilityLabel="Search for a food"
-              />
-              <TouchableOpacity style={dynamic.barcodeButton} onPress={() => router.push({ pathname: '/(tabs)/scan', params: { mealType: selectedMealType } })}>
-                <BarChart3 size={20} color={theme.colors.primary700} />
+      <ScrollView ref={scrollRef} style={dynamic.scrollView} showsVerticalScrollIndicator={false} testID="home-scroll" contentContainerStyle={{ paddingBottom: 100 }}>
+        <View style={dynamic.calendarSection}>
+          <View style={dynamic.monthHeader}>
+            <Text style={dynamic.monthText}>{getMonthYear()}</Text>
+            <View style={dynamic.monthNav}>
+              <TouchableOpacity style={dynamic.monthNavBtn}>
+                <ChevronLeft size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity style={dynamic.monthNavBtn}>
+                <ChevronRight size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
           </View>
-        </AnimatedFadeIn>
+          <View style={dynamic.calendarWeek}>
+            {getWeekDays().map((day, index) => {
+              const isToday = day.isToday;
+              return (
+                <View key={index} style={dynamic.dayColumn}>
+                  <Text style={dynamic.dayInitial}>{day.initial}</Text>
+                  <TouchableOpacity
+                    style={[dynamic.dayCircle, isToday && dynamic.dayCircleActive]}
+                    testID={`day-${index}`}
+                  >
+                    <Text style={[dynamic.dayNumber, isToday && dynamic.dayNumberActive]}>{day.date}</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </View>
+        </View>
 
-        <View style={dynamic.mealPickerRow}>
-          {(['breakfast','lunch','dinner','snack'] as MealEntry['meal_type'][]).map((t) => (
-            <TouchableOpacity
-              key={t}
-              style={[dynamic.mealPill, selectedMealType === t ? dynamic.mealPillActive : undefined]}
-              onPress={() => setSelectedMealType(t)}
-              testID={`meal-pill-${t}`}
-              accessibilityLabel={`Select ${t}`}
+        <View style={dynamic.progressCard}>
+          <View style={dynamic.progressHeader}>
+            <Text style={dynamic.progressTitle}>Daily Progress</Text>
+            <View style={dynamic.progressActions}>
+              <TouchableOpacity style={dynamic.micBtn} testID="voice-log">
+                <Mic size={20} color={theme.colors.primary700} />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={dynamic.addBtn}
+                onPress={() => handleJumpToSearch()}
+                testID="add-food-btn"
+              >
+                <Plus size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={dynamic.progressCircleWrapper}>
+            <CircularProgress size={160} strokeWidth={12} progress={calorieProgress} color={theme.colors.primary700} backgroundColor={theme.colors.cardBorder}>
+              <Text style={dynamic.bigCalories}>{Math.round(dailyNutrition.total_calories)}</Text>
+              <Text style={dynamic.goalCalories}>/ {dailyNutrition.goal_calories} kcal</Text>
+            </CircularProgress>
+          </View>
+
+          <View style={dynamic.macrosRow}>
+            <View style={dynamic.macroItem}>
+              <View style={dynamic.macroCircleWrapper}>
+                <CircularProgress size={80} strokeWidth={12} progress={dailyNutrition.total_carbs / user.goal_carbs} color="#3B82F6" backgroundColor={theme.colors.cardBorder}>
+                  <Text style={dynamic.macroValue}>{Math.round(dailyNutrition.total_carbs)}g</Text>
+                </CircularProgress>
+              </View>
+              <Text style={dynamic.macroLabel}>Carbs</Text>
+              <Text style={dynamic.macroGoal}>of {user.goal_carbs}g</Text>
+            </View>
+
+            <View style={dynamic.macroItem}>
+              <View style={dynamic.macroCircleWrapper}>
+                <CircularProgress size={80} strokeWidth={12} progress={dailyNutrition.total_protein / user.goal_protein} color="#10B981" backgroundColor={theme.colors.cardBorder}>
+                  <Text style={dynamic.macroValue}>{Math.round(dailyNutrition.total_protein)}g</Text>
+                </CircularProgress>
+              </View>
+              <Text style={dynamic.macroLabel}>Protein</Text>
+              <Text style={dynamic.macroGoal}>of {user.goal_protein}g</Text>
+            </View>
+
+            <View style={dynamic.macroItem}>
+              <View style={dynamic.macroCircleWrapper}>
+                <CircularProgress size={80} strokeWidth={12} progress={dailyNutrition.total_fat / user.goal_fat} color="#F59E0B" backgroundColor={theme.colors.cardBorder}>
+                  <Text style={dynamic.macroValue}>{Math.round(dailyNutrition.total_fat)}g</Text>
+                </CircularProgress>
+              </View>
+              <Text style={dynamic.macroLabel}>Fat</Text>
+              <Text style={dynamic.macroGoal}>of {user.goal_fat}g</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={dynamic.searchSection}>
+          <View style={dynamic.newSearchBar}>
+            <Search size={20} color="#666" style={dynamic.searchIcon} />
+            <TextInput
+              ref={searchInputRef}
+              style={dynamic.newSearchInput}
+              placeholder="Search and scan food"
+              placeholderTextColor={theme.colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+              testID="home-search-input"
+            />
+            <TouchableOpacity 
+              style={dynamic.scanIconBtn}
+              onPress={() => router.push({ pathname: '/(tabs)/scan', params: { mealType: selectedMealType } })}
             >
-              <Text style={[dynamic.mealPillText, selectedMealType === t ? dynamic.mealPillTextActive : undefined]}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </Text>
+              <ScanBarcode size={20} color={theme.colors.primary700} />
             </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={dynamic.scanPill}
-            onPress={() => router.push({ pathname: '/(tabs)/scan', params: { mealType: selectedMealType } })}
-            testID="scan-from-search"
-          >
-            <BarChart3 size={16} color={theme.colors.primary700} />
-            <Text style={dynamic.scanPillText}>Scan</Text>
-          </TouchableOpacity>
+          </View>
         </View>
 
         {searchQuery.length > 2 && (
-          <AnimatedFadeIn delay={180}>
-            <View style={dynamic.searchResults}>
-              <Text style={dynamic.searchResultsTitle}>Search Results</Text>
-              {isSearching ? (
-                <Text style={dynamic.loadingText}>Searching...</Text>
-              ) : searchResults.length === 0 ? (
-                <Text style={dynamic.emptyText}>No foods found for &quot;{searchQuery}&quot;</Text>
-              ) : (
-                <FlatList
-                  data={searchResults.slice(0, 8)}
-                  renderItem={({ item }) => (
-                    <View style={dynamic.searchResultItem}>
-                      <FoodCard food={item as FoodItem} onPress={() => handleAddFood(item as FoodItem)} />
-                      <View style={dynamic.resultActionsRow}>
-                        <TouchableOpacity
-                          style={dynamic.primaryAddButton}
-                          onPress={() => handleAddFood(item as FoodItem)}
-                          testID={`add-${selectedMealType}-${(item as FoodItem).id}`}
-                          accessibilityLabel={`Add to ${selectedMealType}`}
-                        >
-                          <Plus size={16} color="#fff" />
-                          <Text style={dynamic.primaryAddButtonText}>Add to {selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1)}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={dynamic.secondaryScanButton}
-                          onPress={() => router.push({ pathname: '/(tabs)/scan', params: { mealType: selectedMealType } })}
-                          testID={`scan-for-${(item as FoodItem).id}`}
-                        >
-                          <BarChart3 size={16} color={theme.colors.primary700} />
-                          <Text style={dynamic.secondaryScanButtonText}>Scan</Text>
-                        </TouchableOpacity>
-                      </View>
+          <View style={dynamic.searchResults}>
+            <Text style={dynamic.searchResultsTitle}>Search Results</Text>
+            {isSearching ? (
+              <Text style={dynamic.loadingText}>Searching...</Text>
+            ) : searchResults.length === 0 ? (
+              <Text style={dynamic.emptyText}>No foods found for &quot;{searchQuery}&quot;</Text>
+            ) : (
+              <FlatList
+                data={searchResults.slice(0, 8)}
+                renderItem={({ item }) => (
+                  <View style={dynamic.searchResultItem}>
+                    <FoodCard food={item as FoodItem} onPress={() => handleAddFood(item as FoodItem)} />
+                    <View style={dynamic.resultActionsRow}>
+                      <TouchableOpacity
+                        style={dynamic.primaryAddButton}
+                        onPress={() => handleAddFood(item as FoodItem)}
+                        testID={`add-${selectedMealType}-${(item as FoodItem).id}`}
+                      >
+                        <Plus size={16} color="#fff" />
+                        <Text style={dynamic.primaryAddButtonText}>Add to {selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1)}</Text>
+                      </TouchableOpacity>
                     </View>
-                  )}
-                  keyExtractor={(item) => (item as FoodItem).id}
-                  showsVerticalScrollIndicator={false}
-                  testID="home-search-results"
-                />
-              )}
-            </View>
-          </AnimatedFadeIn>
+                  </View>
+                )}
+                keyExtractor={(item) => (item as FoodItem).id}
+                showsVerticalScrollIndicator={false}
+                testID="home-search-results"
+              />
+            )}
+          </View>
         )}
 
-        <AnimatedFadeIn delay={210}>
-          <View style={dynamic.calorieCard}>
-            <Text style={dynamic.cardTitle}>Calories</Text>
-            <Text style={dynamic.cardSubtitle}>Remaining = Goal - Food</Text>
+        <View style={dynamic.moveCaloriesCard}>
+          <View style={dynamic.moveCaloriesRow}>
+            <View style={dynamic.swapIcon}>
+              <ArrowLeftRight size={20} color={theme.colors.primary700} />
+            </View>
+            <View style={dynamic.moveCaloriesText}>
+              <Text style={dynamic.moveCaloriesTitle}>Move Calories</Text>
+              <Text style={dynamic.moveCaloriesSubtitle}>Between Meals</Text>
+            </View>
+            <TouchableOpacity onPress={() => setShowCrossDayModal(true)} testID="open-cross-day">
+              <Text style={dynamic.moveBtn}>Move</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-            <View style={dynamic.calorieContent}>
-              <CircularProgress size={130} strokeWidth={10} progress={calorieProgress} color={theme.colors.primary700} backgroundColor={theme.colors.accent}>
-                <Text style={dynamic.remainingCalories}>{remainingCalories}</Text>
-                <Text style={dynamic.remainingLabel}>Remaining</Text>
-              </CircularProgress>
+        <View style={dynamic.todayMealsCard}>
+          <Text style={dynamic.todayMealsTitle}>Today&apos;s Meals</Text>
+          
+          {Object.entries(mealsByType).map(([mealType, meals]) => {
+            const isExpanded = expandedMeal === mealType;
+            const totalCalories = getMealCalories(mealType as MealType);
+            const progress = totalCalories / (dailyNutrition.goal_calories / 4);
 
-              <View style={dynamic.calorieStats}>
-                <View style={dynamic.statItem}>
-                  <Target size={16} color="#fff" />
-                  <Text style={dynamic.statLabel}>Base Goal</Text>
-                  <Text style={dynamic.statValue}>{dailyNutrition.goal_calories}</Text>
-                </View>
-                <View style={dynamic.statItem}>
-                  <TrendingUp size={16} color="#fff" />
-                  <Text style={dynamic.statLabel}>Food</Text>
-                  <Text style={dynamic.statValue}>{Math.round(dailyNutrition.total_calories)}</Text>
-                </View>
-                {weeklySummary && (
-                  <View style={dynamic.statItem}>
-                    <Wallet size={16} color={weeklySummary.buffer_balance >= 0 ? '#10B981' : '#EF4444'} />
-                    <Text style={dynamic.statLabel}>Weekly buffer</Text>
-                    <Text style={[dynamic.statValue, { color: weeklySummary.buffer_balance >= 0 ? '#10B981' : '#EF4444' }]}>
-                      {weeklySummary.buffer_balance}
-                    </Text>
+            return (
+              <View key={mealType} style={dynamic.mealAccordion}>
+                <TouchableOpacity 
+                  style={dynamic.mealAccordionHeader}
+                  onPress={() => setExpandedMeal(isExpanded ? null : mealType as MealType)}
+                  testID={`meal-header-${mealType}`}
+                >
+                  <View style={dynamic.mealHeaderLeft}>
+                    <Text style={dynamic.mealEmoji}>{mealIcons[mealType as MealType]}</Text>
+                    <View style={dynamic.mealInfo}>
+                      <Text style={dynamic.mealName}>{mealType.charAt(0).toUpperCase() + mealType.slice(1)}</Text>
+                      <View style={dynamic.mealStats}>
+                        <Text style={dynamic.mealCalories}>{Math.round(totalCalories)} kcal</Text>
+                        <View style={dynamic.mealProgressBar}>
+                          <View style={[dynamic.mealProgressFill, { width: `${Math.min(progress * 100, 100)}%` }]} />
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                  <View style={dynamic.mealHeaderRight}>
+                    <TouchableOpacity 
+                      style={dynamic.mealAddBtn}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleJumpToSearch(mealType as MealEntry['meal_type']);
+                      }}
+                      testID={`add-to-${mealType}`}
+                    >
+                      <Plus size={16} color="#fff" />
+                    </TouchableOpacity>
+                    <ChevronDown 
+                      size={20} 
+                      color={theme.colors.textMuted} 
+                      style={[dynamic.chevron, isExpanded && dynamic.chevronExpanded]}
+                    />
+                  </View>
+                </TouchableOpacity>
+
+                {isExpanded && meals.length > 0 && (
+                  <View style={dynamic.mealContent}>
+                    {meals.map((meal) => (
+                      <View key={meal.id} style={dynamic.mealItem}>
+                        <Text style={dynamic.mealItemName}>{meal.food_item.name}</Text>
+                        <Text style={dynamic.mealItemCalories}>{Math.round(meal.food_item.calories * meal.quantity)} kcal</Text>
+                      </View>
+                    ))}
                   </View>
                 )}
               </View>
-            </View>
-          </View>
-        </AnimatedFadeIn>
-
-        <AnimatedFadeIn delay={260}>
-          <View style={dynamic.bufferCard}>
-            <View style={dynamic.bufferHeader}>
-              <Text style={dynamic.bufferTitle}>Move calories between meals</Text>
-              <TouchableOpacity onPress={() => setShowCrossDayModal(true)} testID="open-cross-day">
-                <Text style={{ color: '#fff', fontWeight: '700' }}>Across days</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={dynamic.bufferControlsRow}>
-              {(['breakfast','lunch','dinner','snack'] as MealType[]).map((t) => (
-                <TouchableOpacity key={`from-${t}`} style={[dynamic.mealPill, fromMeal === t && dynamic.mealPillActive]} onPress={() => setFromMeal(t)} testID={`from-pill-${t}`}>
-                  <Text style={[dynamic.mealPillText, fromMeal === t && dynamic.mealPillTextActive]}>{t.slice(0,1).toUpperCase()+t.slice(1)}</Text>
-                </TouchableOpacity>
-              ))}
-              <ArrowLeftRight size={16} color={theme.colors.textMuted} />
-              {(['breakfast','lunch','dinner','snack'] as MealType[]).map((t) => (
-                <TouchableOpacity key={`to-${t}`} style={[dynamic.mealPill, toMeal === t && dynamic.mealPillActive]} onPress={() => setToMeal(t)} testID={`to-pill-${t}`}>
-                  <Text style={[dynamic.mealPillText, toMeal === t && dynamic.mealPillTextActive]}>{t.slice(0,1).toUpperCase()+t.slice(1)}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View style={dynamic.bufferActionsRow}>
-              <TextInput
-                style={dynamic.bufferInput}
-                value={moveCalories}
-                onChangeText={setMoveCalories}
-                keyboardType="numeric"
-                placeholder="200"
-                placeholderTextColor={theme.colors.textMuted}
-                testID="move-calories-input"
-              />
-              <TouchableOpacity
-                style={dynamic.bufferMoveBtn}
-                onPress={() => moveCaloriesBetweenMeals(fromMeal, toMeal, Math.max(0, parseInt(moveCalories || '0', 10)))}
-                testID="move-calories-btn"
-              >
-                <ArrowLeftRight size={16} color="#fff" />
-                <Text style={dynamic.bufferMoveText}>Move</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={dynamic.macrosCard}>
-            <MacroCircleStat
-              type="protein"
-              value={dailyNutrition.total_protein}
-              goal={user.goal_protein}
-              color="#F97373"
-              accent="#F2F4F7"
-              icon={<Drumstick color="#F97373" size={20} />}
-              testID="macro-protein"
-            />
-            <MacroCircleStat
-              type="carbs"
-              value={dailyNutrition.total_carbs}
-              goal={user.goal_carbs}
-              color="#4ECDC4"
-              accent="#EEF6F5"
-              icon={<Wheat color="#4ECDC4" size={20} />}
-              testID="macro-carbs"
-            />
-            <MacroCircleStat
-              type="fat"
-              value={dailyNutrition.total_fat}
-              goal={user.goal_fat}
-              color="#FFD93D"
-              accent="#FFF7D6"
-              icon={<Egg color="#FFD93D" size={20} />}
-              testID="macro-fat"
-            />
-          </View>
-        </AnimatedFadeIn>
-
-        <TouchableOpacity style={dynamic.quickAddButton} onPress={() => handleJumpToSearch()} testID="quick-add-button">
-          <Plus size={24} color="white" />
-          <Text style={dynamic.quickAddText}>Add Food</Text>
-        </TouchableOpacity>
+            );
+          })}
+        </View>
 
         {suggestions.length > 0 && (
-          <AnimatedFadeIn delay={300}>
-            <View style={dynamic.section}>
-              <Text style={dynamic.sectionTitle}>Suggested Foods</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {suggestions.map((food) => (
-                  <View key={food.id} style={dynamic.suggestionCard}>
-                    <FoodCard food={food} onPress={() => handleAddFood(food)} />
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          </AnimatedFadeIn>
-        )}
-
-        <AnimatedFadeIn delay={340}>
-          <View style={dynamic.mealsCard}>
-            <Text style={dynamic.mealsTitle}>Today&apos;s Meals</Text>
-
-            {Object.entries(mealsByType).map(([mealType, meals], index, arr) => (
-              <View key={mealType} style={dynamic.mealSection}>
-                <View style={dynamic.mealHeader}>
-                  <Text style={dynamic.mealTitle}>{mealType.charAt(0).toUpperCase() + mealType.slice(1)}</Text>
-                </View>
-
-                {meals.length === 0 ? (
-                  <Text style={dynamic.emptyMealText}>No {mealType} logged yet</Text>
-                ) : (
-                  meals.map((meal) => (
-                    <MealCard key={meal.id} meal={meal} onDelete={() => removeMeal(meal.id)} />
-                  ))
-                )}
-
-                <TouchableOpacity
-                  style={dynamic.addRectButton}
-                  onPress={() => handleJumpToSearch(mealType as MealEntry['meal_type'])}
-                  testID={`add-rect-${mealType}`}
-                  accessibilityLabel={`Add to ${mealType}`}
+          <View style={dynamic.suggestionsSection}>
+            <Text style={dynamic.suggestionsTitle}>Today&apos;s AI Suggestions</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={dynamic.suggestionsScroll}>
+              {suggestions.slice(0, 5).map((food) => (
+                <TouchableOpacity 
+                  key={food.id} 
+                  style={dynamic.suggestionCard}
+                  onPress={() => handleAddFood(food)}
                 >
-                  <Plus size={18} color="#fff" />
-                  <Text style={dynamic.addRectText}>Add to Today</Text>
-                </TouchableOpacity>
-
-                {index < arr.length - 1 && <View style={dynamic.divider} />}
-              </View>
-            ))}
-          </View>
-        </AnimatedFadeIn>
-
-        {todayWorkouts.length > 0 && (
-          <AnimatedFadeIn delay={380}>
-            <View style={dynamic.section}>
-              <Text style={dynamic.sectionTitle}>Recently uploaded</Text>
-              {todayWorkouts.slice(0, 3).map((workout) => {
-                const workoutTypeLabels = {
-                  run: 'Run',
-                  weight_lifting: 'Weight lifting',
-                  describe: 'Workout',
-                  manual: 'Exercise',
-                };
-                const workoutTypeIcons = {
-                  run: '👟',
-                  weight_lifting: '🏋️',
-                  describe: '✏️',
-                  manual: '🔥',
-                };
-                const time = new Date(workout.timestamp).toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                });
-
-                return (
-                  <View key={workout.id} style={dynamic.workoutCard}>
-                    <View style={dynamic.workoutIconContainer}>
-                      <Text style={dynamic.workoutIcon}>{workoutTypeIcons[workout.type]}</Text>
+                  {food.image_url ? (
+                    <Image source={{ uri: food.image_url }} style={dynamic.suggestionImage} />
+                  ) : (
+                    <View style={dynamic.suggestionImagePlaceholder}>
+                      <Text style={dynamic.suggestionEmoji}>🍽️</Text>
                     </View>
-                    <View style={dynamic.workoutContent}>
-                      <Text style={dynamic.workoutTitle}>{workoutTypeLabels[workout.type]}</Text>
-                      <View style={dynamic.workoutDetails}>
-                        <View style={dynamic.workoutDetailItem}>
-                          <Zap size={14} color={theme.colors.textMuted} />
-                          <Text style={dynamic.workoutDetailText}>
-                            Intensity: {workout.intensity.charAt(0).toUpperCase() + workout.intensity.slice(1)}
-                          </Text>
-                        </View>
-                        <View style={dynamic.workoutDetailItem}>
-                          <Clock size={14} color={theme.colors.textMuted} />
-                          <Text style={dynamic.workoutDetailText}>{workout.duration} Mins</Text>
-                        </View>
-                      </View>
-                    </View>
-                    <View style={dynamic.workoutCalories}>
-                      <Text style={dynamic.workoutTime}>{time}</Text>
-                      <View style={dynamic.caloriesBadge}>
-                        <Text style={dynamic.caloriesIcon}>🔥</Text>
-                        <Text style={dynamic.caloriesText}>{workout.calories} calories</Text>
-                      </View>
-                    </View>
+                  )}
+                  <View style={dynamic.suggestionInfo}>
+                    <Text style={dynamic.suggestionName} numberOfLines={1}>{food.name}</Text>
+                    <Text style={dynamic.suggestionCalories}>~ {Math.round(food.calories)} kcal</Text>
                   </View>
-                );
-              })}
-            </View>
-          </AnimatedFadeIn>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         )}
+
+        <View style={dynamic.progressJourney}>
+          <Text style={dynamic.progressJourneyTitle}>Your Progress Journey</Text>
+          <View style={dynamic.progressJourneyContent}>
+            <View style={dynamic.trendingIcon}>
+              <TrendingUp size={32} color={theme.colors.primary700} />
+            </View>
+            <View style={dynamic.progressJourneyText}>
+              <Text style={dynamic.progressJourneyHeading}>On track to reach your goal!</Text>
+              <Text style={dynamic.progressJourneySubtitle}>2 weeks to next milestone</Text>
+            </View>
+            <TouchableOpacity>
+              <Text style={dynamic.viewReportLink}>View Report</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
 
       <Modal
@@ -1413,4 +1337,449 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: Theme.colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  } as const,
+  avatarWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    overflow: 'hidden',
+  } as const,
+  avatar: {
+    width: 48,
+    height: 48,
+  } as const,
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Theme.colors.accent,
+  } as const,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Theme.colors.text,
+    flex: 1,
+    textAlign: 'center',
+  } as const,
+  settingsBtn: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const,
+
+  calendarSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  } as const,
+  monthHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  } as const,
+  monthText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Theme.colors.text,
+  } as const,
+  monthNav: {
+    flexDirection: 'row',
+    gap: 8,
+  } as const,
+  monthNavBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const,
+  dayColumn: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 8,
+  } as const,
+  dayCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  } as const,
+  dayCircleActive: {
+    backgroundColor: Theme.colors.primary700,
+  } as const,
+
+  progressCard: {
+    marginHorizontal: 16,
+    marginVertical: 16,
+    borderRadius: 16,
+    padding: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  } as const,
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  } as const,
+  progressTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: Theme.colors.text,
+  } as const,
+  progressActions: {
+    flexDirection: 'row',
+    gap: 8,
+  } as const,
+  micBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(19, 127, 236, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const,
+  addBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Theme.colors.primary700,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Theme.colors.primary700,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  } as const,
+  progressCircleWrapper: {
+    alignItems: 'center',
+    marginBottom: 24,
+  } as const,
+  bigCalories: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: Theme.colors.text,
+  } as const,
+  goalCalories: {
+    fontSize: 14,
+    color: Theme.colors.textMuted,
+    marginTop: 4,
+  } as const,
+  macrosRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  } as const,
+  macroItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 8,
+  } as const,
+  macroCircleWrapper: {
+    marginBottom: 4,
+  } as const,
+  macroValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Theme.colors.text,
+  } as const,
+  macroLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Theme.colors.text,
+  } as const,
+  macroGoal: {
+    fontSize: 12,
+    color: Theme.colors.textMuted,
+  } as const,
+
+  searchSection: {
+    paddingHorizontal: 16,
+    marginBottom: 0,
+  } as const,
+  newSearchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 999,
+    paddingVertical: 12,
+    paddingLeft: 12,
+    paddingRight: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  } as const,
+  searchIcon: {
+    marginRight: 8,
+  } as const,
+  newSearchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: Theme.colors.text,
+  } as const,
+  scanIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(19, 127, 236, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const,
+
+  moveCaloriesCard: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 0,
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  } as const,
+  moveCaloriesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  } as const,
+  swapIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(19, 127, 236, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const,
+  moveCaloriesText: {
+    flex: 1,
+  } as const,
+  moveCaloriesTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Theme.colors.text,
+  } as const,
+  moveCaloriesSubtitle: {
+    fontSize: 12,
+    color: Theme.colors.textMuted,
+  } as const,
+  moveBtn: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Theme.colors.primary700,
+  } as const,
+
+  todayMealsCard: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+    padding: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  } as const,
+  todayMealsTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: Theme.colors.text,
+    marginBottom: 16,
+  } as const,
+  mealAccordion: {
+    marginBottom: 4,
+  } as const,
+  mealAccordionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  } as const,
+  mealHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  } as const,
+  mealEmoji: {
+    fontSize: 32,
+  } as const,
+  mealInfo: {
+    flex: 1,
+  } as const,
+  mealName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Theme.colors.text,
+    marginBottom: 4,
+  } as const,
+  mealStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  } as const,
+  mealCalories: {
+    fontSize: 14,
+    color: Theme.colors.textMuted,
+  } as const,
+  mealProgressBar: {
+    width: 80,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Theme.colors.cardBorder,
+    overflow: 'hidden',
+  } as const,
+  mealProgressFill: {
+    height: '100%',
+    backgroundColor: Theme.colors.primary700,
+    borderRadius: 2,
+  } as const,
+  mealHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  } as const,
+  mealAddBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Theme.colors.primary700,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const,
+  chevron: {
+    transform: [{ rotate: '0deg' }],
+  } as const,
+  chevronExpanded: {
+    transform: [{ rotate: '180deg' }],
+  } as const,
+  mealContent: {
+    paddingLeft: 44,
+    paddingTop: 8,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+    marginTop: 8,
+  } as const,
+  mealItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  } as const,
+  mealItemName: {
+    fontSize: 14,
+    color: Theme.colors.textMuted,
+  } as const,
+  mealItemCalories: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Theme.colors.text,
+  } as const,
+
+  suggestionsSection: {
+    marginTop: 16,
+    marginBottom: 16,
+  } as const,
+  suggestionsTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: Theme.colors.text,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  } as const,
+  suggestionsScroll: {
+    paddingLeft: 16,
+  } as const,
+  suggestionImage: {
+    width: '100%',
+    height: 112,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  } as const,
+  suggestionImagePlaceholder: {
+    width: '100%',
+    height: 112,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    backgroundColor: Theme.colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const,
+  suggestionEmoji: {
+    fontSize: 48,
+  } as const,
+  suggestionInfo: {
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+  } as const,
+  suggestionName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Theme.colors.text,
+    marginBottom: 2,
+  } as const,
+  suggestionCalories: {
+    fontSize: 12,
+    color: Theme.colors.textMuted,
+  } as const,
+
+  progressJourney: {
+    marginHorizontal: 16,
+    marginVertical: 16,
+    borderRadius: 16,
+    padding: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  } as const,
+  progressJourneyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Theme.colors.text,
+    marginBottom: 16,
+  } as const,
+  progressJourneyContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  } as const,
+  trendingIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(19, 127, 236, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const,
+  progressJourneyText: {
+    flex: 1,
+  } as const,
+  progressJourneyHeading: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Theme.colors.text,
+    marginBottom: 4,
+  } as const,
+  progressJourneySubtitle: {
+    fontSize: 14,
+    color: Theme.colors.textMuted,
+  } as const,
+  viewReportLink: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Theme.colors.primary700,
+  } as const,
 });

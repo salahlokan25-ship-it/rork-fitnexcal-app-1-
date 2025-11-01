@@ -11,6 +11,7 @@ export type ThemeType = {
     text: string;
     textMuted: string;
     border: string;
+    cardBorder: string;
     cardShadow: string;
     success: string;
     warning: string;
@@ -63,6 +64,7 @@ export const Theme: ThemeType = {
     text: '#0F172A',
     textMuted: '#667085',
     border: 'rgba(15, 23, 42, 0.06)',
+    cardBorder: 'rgba(200, 200, 200, 0.2)',
     cardShadow: 'rgba(10, 132, 255, 0.25)',
     success: '#22C55E',
     warning: '#F59E0B',
