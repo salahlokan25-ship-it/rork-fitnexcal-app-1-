@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, Camera, Search, MessageCircle, Settings, Plus, Heart, Brain } from 'lucide-react-native';
+import { Home, Camera, Search, MessageCircle, Settings, Plus, Heart } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/theme';
@@ -106,10 +106,10 @@ function RootLayoutNav() {
         }}
       />
       <Tabs.Screen
-        name="research"
+        name="wellness"
         options={{
-          title: 'Search',
-          tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
+          title: 'Wellness',
+          tabBarIcon: ({ color, size }) => <Heart color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -127,17 +127,10 @@ function RootLayoutNav() {
         }}
       />
       <Tabs.Screen
-        name="wellness"
+        name="research"
         options={{
-          title: 'Wellness',
-          tabBarIcon: ({ color, size }) => <Heart color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="mindfulness"
-        options={{
-          title: 'Mind',
-          tabBarIcon: ({ color, size }) => <Brain color={color} size={size} />,
+          title: 'Search',
+          tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
         }}
       />
       <Tabs.Screen
