@@ -191,9 +191,6 @@ export default function DashboardScreen() {
           <View style={dynamic.progressHeader}>
             <Text style={dynamic.progressTitle}>Daily Progress</Text>
             <View style={dynamic.progressActions}>
-              <TouchableOpacity style={dynamic.micBtn} testID="voice-log">
-                <Mic size={20} color={theme.colors.primary700} />
-              </TouchableOpacity>
               <TouchableOpacity 
                 style={dynamic.addBtn}
                 onPress={() => handleJumpToSearch()}
