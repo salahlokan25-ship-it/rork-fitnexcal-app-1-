@@ -21,6 +21,7 @@ const lightTheme: ThemeType = {
     text: '#0F172A',
     textMuted: '#667085',
     border: 'rgba(15, 23, 42, 0.06)',
+    cardBorder: 'rgba(15, 23, 42, 0.08)',
     cardShadow: 'rgba(10, 132, 255, 0.25)',
     success: '#22C55E',
     warning: '#F59E0B',
@@ -47,6 +48,7 @@ const darkTheme: ThemeType = {
     text: '#E5E7EB',
     textMuted: '#9AA3B2',
     border: 'rgba(229, 231, 235, 0.08)',
+    cardBorder: 'rgba(255, 255, 255, 0.1)',
     cardShadow: 'rgba(0, 0, 0, 0.35)',
     success: '#22C55E',
     warning: '#F59E0B',
@@ -61,15 +63,15 @@ const darkTheme: ThemeType = {
 };
 
 export const [ThemeProvider, useTheme] = createContextHook(() => {
-  const [mode, setMode] = useState<ThemeMode>('light');
-  const [theme, setTheme] = useState<ThemeType>(lightTheme);
+  const [mode, setMode] = useState<ThemeMode>('dark');
+  const [theme, setTheme] = useState<ThemeType>(darkTheme);
   const [hydrated, setHydrated] = useState<boolean>(false);
 
   useEffect(() => {
     const load = async () => {
       try {
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        const m = (stored as ThemeMode | null) ?? 'light';
+        const m = (stored as ThemeMode | null) ?? 'dark';
         setMode(m);
         setTheme(m === 'dark' ? darkTheme : lightTheme);
         await SystemUI.setBackgroundColorAsync(m === 'dark' ? darkTheme.colors.background : lightTheme.colors.background);
