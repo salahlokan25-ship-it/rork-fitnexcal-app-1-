@@ -211,7 +211,7 @@ export default function DashboardScreen() {
           <View style={dynamic.macrosRow}>
             <View style={dynamic.macroItem}>
               <View style={dynamic.macroCircleWrapper}>
-                <CircularProgress size={80} strokeWidth={12} progress={dailyNutrition.total_carbs / user.goal_carbs} color="#3B82F6" backgroundColor={theme.colors.cardBorder}>
+                <CircularProgress size={80} strokeWidth={12} progress={dailyNutrition.total_carbs / user.goal_carbs} color="#F59E0B" backgroundColor={theme.colors.cardBorder}>
                   <Text style={dynamic.macroValue}>{Math.round(dailyNutrition.total_carbs)}g</Text>
                 </CircularProgress>
               </View>
@@ -221,7 +221,7 @@ export default function DashboardScreen() {
 
             <View style={dynamic.macroItem}>
               <View style={dynamic.macroCircleWrapper}>
-                <CircularProgress size={80} strokeWidth={12} progress={dailyNutrition.total_protein / user.goal_protein} color="#10B981" backgroundColor={theme.colors.cardBorder}>
+                <CircularProgress size={80} strokeWidth={12} progress={dailyNutrition.total_protein / user.goal_protein} color="#EF4444" backgroundColor={theme.colors.cardBorder}>
                   <Text style={dynamic.macroValue}>{Math.round(dailyNutrition.total_protein)}g</Text>
                 </CircularProgress>
               </View>
@@ -231,7 +231,7 @@ export default function DashboardScreen() {
 
             <View style={dynamic.macroItem}>
               <View style={dynamic.macroCircleWrapper}>
-                <CircularProgress size={80} strokeWidth={12} progress={dailyNutrition.total_fat / user.goal_fat} color="#F59E0B" backgroundColor={theme.colors.cardBorder}>
+                <CircularProgress size={80} strokeWidth={12} progress={dailyNutrition.total_fat / user.goal_fat} color="#10B981" backgroundColor={theme.colors.cardBorder}>
                   <Text style={dynamic.macroValue}>{Math.round(dailyNutrition.total_fat)}g</Text>
                 </CircularProgress>
               </View>
