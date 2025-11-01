@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, FlatLi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/theme';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, TrendingUp, Target, Search, BarChart3, Drumstick, Wheat, Egg, Zap, Clock, ArrowLeftRight, Wallet, Trees, HandHeart, Globe, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react-native';
+import { Plus, TrendingUp, Target, Search, BarChart3, Drumstick, Wheat, Egg, Zap, Clock, ArrowLeftRight, Wallet } from 'lucide-react-native';
 import { useUser } from '@/hooks/user-store';
 import { useNutrition } from '@/hooks/nutrition-store';
 import { useWorkout } from '@/hooks/workout-store';
@@ -16,7 +16,7 @@ import MealCard from '@/components/MealCard';
 import { router } from 'expo-router';
 import AnimatedFadeIn from '@/components/AnimatedFadeIn';
 import type { FoodItem, MealEntry, MealType } from '@/types/nutrition';
-import { useKarma } from '@/hooks/karma-store';
+
 
 function getWeekDays() {
   const today = new Date();
@@ -42,7 +42,6 @@ export default function DashboardScreen() {
   const { theme } = useTheme();
   const { dailyNutrition, isLoading, removeMeal, updateGoalCalories, addMeal, weeklySummary, moveCaloriesBetweenMeals, moveCaloriesAcrossDays, healthAlerts, clearHealthAlerts } = useNutrition();
   const { todayWorkouts } = useWorkout();
-  const { units_week, kcal_saved_week, last_action, daily_saved, daily_trend } = useKarma();
   const { suggestions } = useFoodSuggestions();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedMealType, setSelectedMealType] = useState<MealEntry['meal_type']>('lunch');
@@ -276,43 +275,6 @@ export default function DashboardScreen() {
         )}
 
         <AnimatedFadeIn delay={210}>
-          <View style={dynamic.karmaCard} testID="karma-card">
-            <View style={dynamic.karmaHeaderRow}>
-              <Text style={dynamic.karmaTitle}>Calorie Karma</Text>
-              <View style={dynamic.karmaUnitsPill}>
-                <Text style={dynamic.karmaUnitsText}>{units_week} u</Text>
-              </View>
-            </View>
-            <View style={dynamic.karmaBodyRow}>
-              <View style={dynamic.karmaLeft}>
-                <Text style={dynamic.karmaSubtitle}>Every 100 kcal saved turns into impact</Text>
-                <Text style={dynamic.karmaSavedText}>{kcal_saved_week} kcal saved this week</Text>
-                <View style={dynamic.karmaTodayRow}>
-                  {daily_trend === 'up' ? (<ArrowUpRight size={14} color="#10B981" />) : daily_trend === 'down' ? (<ArrowDownRight size={14} color="#EF4444" />) : (<Minus size={14} color={theme.colors.textMuted} />)}
-                  <Text style={dynamic.karmaTodayText}>Today: {daily_saved} kcal</Text>
-                </View>
-                {last_action ? (
-                  <View style={dynamic.karmaImpactRow}>
-                    {last_action.action === 'reforestation' ? (
-                      <Trees size={18} color="#16A34A" />
-                    ) : last_action.action === 'carbon_offset' ? (
-                      <Globe size={18} color="#0EA5E9" />
-                    ) : (
-                      <HandHeart size={18} color="#F97316" />
-                    )}
-                    <Text style={dynamic.karmaImpactText}>{last_action.message}</Text>
-                  </View>
-                ) : (
-                  <View style={dynamic.karmaImpactRow}>
-                    <Text style={dynamic.karmaImpactText}>Make healthy choices to unlock impact</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
-        </AnimatedFadeIn>
-
-        <AnimatedFadeIn delay={220}>
           <View style={dynamic.calorieCard}>
             <Text style={dynamic.cardTitle}>Calories</Text>
             <Text style={dynamic.cardSubtitle}>Remaining = Goal - Food</Text>
@@ -747,33 +709,6 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   dayNumberActive: {
     color: '#fff',
   },
-  karmaCard: {
-    backgroundColor: Theme.colors.surface,
-    marginHorizontal: 20,
-    marginBottom: 16,
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-    shadowColor: Theme.shadow.soft.shadowColor,
-    shadowOffset: Theme.shadow.soft.shadowOffset,
-    shadowOpacity: Theme.shadow.soft.shadowOpacity,
-    shadowRadius: Theme.shadow.soft.shadowRadius,
-    elevation: Theme.shadow.soft.elevation,
-  },
-  karmaHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  karmaTitle: { fontSize: 18, fontWeight: '800', color: Theme.colors.text },
-  karmaUnitsPill: { backgroundColor: Theme.colors.accent, borderWidth: 1, borderColor: Theme.colors.border, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-  karmaUnitsText: { fontSize: 12, fontWeight: '800', color: Theme.colors.primary700 },
-  karmaBodyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  karmaLeft: { flex: 1, paddingRight: 12 },
-  karmaSubtitle: { fontSize: 12, color: Theme.colors.textMuted, marginBottom: 4 },
-  karmaSavedText: { fontSize: 14, fontWeight: '700', color: Theme.colors.text, marginBottom: 6 },
-  karmaImpactRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  karmaImpactText: { flex: 1, color: Theme.colors.text, fontSize: 13 },
-  karmaTodayRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  karmaTodayText: { fontSize: 12, color: Theme.colors.textMuted },
-
   calorieCard: {
     backgroundColor: Theme.colors.primary700,
     marginHorizontal: 20,
