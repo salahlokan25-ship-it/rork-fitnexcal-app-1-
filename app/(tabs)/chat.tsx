@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Send, Bot, User } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Animated } from 'react-native';
+import { Stack } from 'expo-router';
+import { Send, Info } from 'lucide-react-native';
 import { askNutritionQuestion } from '@/services/ai-service';
 import { useUser } from '@/hooks/user-store';
 import { useNutrition } from '@/hooks/nutrition-store';
@@ -17,10 +17,9 @@ interface Message {
 }
 
 const QUICK_QUESTIONS = [
-  "What should I eat for breakfast?",
-  "How can I increase my protein intake?",
-  "What are healthy snack options?",
-  "How do I meal prep effectively?",
+  "What's a good snack?",
+  "Log my last meal",
+  "Calories in an apple?",
 ];
 
 const chatKeyFor = (email?: string | null) => `chat_history:${email?.toLowerCase() ?? 'guest'}`;
@@ -130,15 +129,29 @@ export default function ChatScreen() {
   const dynamic = stylesWithTheme(theme);
 
   return (
-    <SafeAreaView style={dynamic.container}>
-      <View style={dynamic.header}>
-        <Bot size={24} color="#007AFF" />
-        <Text style={dynamic.title}>Nutrition Assistant</Text>
-      </View>
+    <View style={dynamic.container}>
+      <Stack.Screen
+        options={{
+          title: 'AI Coach',
+          headerStyle: {
+            backgroundColor: theme.colors.background,
+          },
+          headerTintColor: theme.colors.text,
+          headerTitleStyle: {
+            fontWeight: '700',
+          },
+          headerRight: () => (
+            <TouchableOpacity style={dynamic.headerButton}>
+              <Info size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
 
       <KeyboardAvoidingView 
         style={dynamic.content}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <ScrollView
           ref={scrollViewRef}
@@ -150,104 +163,166 @@ export default function ChatScreen() {
             <View
               key={message.id}
               style={[
-                dynamic.messageContainer,
-                message.isUser ? dynamic.userMessageContainer : dynamic.aiMessageContainer
+                dynamic.messageRow,
+                message.isUser ? dynamic.userMessageRow : dynamic.aiMessageRow
               ]}
             >
-              <View style={dynamic.messageHeader}>
-                {message.isUser ? (
-                  <User size={16} color="#007AFF" />
-                ) : (
-                  <Bot size={16} color="#007AFF" />
-                )}
-                <Text style={dynamic.messageTime}>
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-              </View>
+              {!message.isUser && (
+                <View style={dynamic.avatarContainer}>
+                  <View style={dynamic.aiAvatar}>
+                    <Text style={dynamic.aiAvatarText}>🤖</Text>
+                  </View>
+                </View>
+              )}
               
-              <View style={[
-                dynamic.messageBubble,
-                message.isUser ? dynamic.userMessageBubble : dynamic.aiMessageBubble
-              ]}>
-                <Text style={[
-                  dynamic.messageText,
-                  message.isUser ? dynamic.userMessageText : dynamic.aiMessageText
-                ]}>
-                  {message.text}
+              <View style={dynamic.messageContent}>
+                <Text style={dynamic.messageSender}>
+                  {message.isUser ? 'You' : 'AI Coach'}
                 </Text>
+                <View style={[
+                  dynamic.messageBubble,
+                  message.isUser ? dynamic.userMessageBubble : dynamic.aiMessageBubble
+                ]}>
+                  <Text style={[
+                    dynamic.messageText,
+                    message.isUser ? dynamic.userMessageText : dynamic.aiMessageText
+                  ]}>
+                    {message.text}
+                  </Text>
+                </View>
               </View>
+
+              {message.isUser && (
+                <View style={dynamic.avatarContainer}>
+                  <View style={dynamic.userAvatar}>
+                    <Text style={dynamic.userAvatarText}>👤</Text>
+                  </View>
+                </View>
+              )}
             </View>
           ))}
 
           {isLoading && (
-            <View style={dynamic.loadingContainer}>
-              <View style={dynamic.loadingBubble}>
-                <Text style={dynamic.loadingText}>Thinking...</Text>
+            <View style={dynamic.messageRow}>
+              <View style={dynamic.avatarContainer}>
+                <View style={dynamic.aiAvatar}>
+                  <Text style={dynamic.aiAvatarText}>🤖</Text>
+                </View>
               </View>
-            </View>
-          )}
-
-          {/* Quick Questions */}
-          {messages.length === 1 && (
-            <View style={dynamic.quickQuestionsContainer}>
-              <Text style={dynamic.quickQuestionsTitle}>Quick Questions:</Text>
-              {QUICK_QUESTIONS.map((question, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={dynamic.quickQuestionButton}
-                  onPress={() => handleQuickQuestion(question)}
-                >
-                  <Text style={dynamic.quickQuestionText}>{question}</Text>
-                </TouchableOpacity>
-              ))}
+              <View style={dynamic.loadingBubble}>
+                <TypingIndicator />
+              </View>
             </View>
           )}
         </ScrollView>
 
-        <View style={dynamic.inputContainer}>
-          <TextInput
-            style={dynamic.textInput}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Ask me anything about nutrition..."
-            multiline
-            maxLength={500}
-            editable={!isLoading}
-          />
-          <TouchableOpacity
-            style={[dynamic.sendButton, (!inputText.trim() || isLoading) && dynamic.sendButtonDisabled]}
-            onPress={() => sendMessage(inputText)}
-            disabled={!inputText.trim() || isLoading}
+        <View style={dynamic.inputWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={dynamic.quickRepliesScroll}
+            contentContainerStyle={dynamic.quickRepliesContent}
           >
-            <Send size={20} color={(!inputText.trim() || isLoading) ? '#ccc' : '#007AFF'} />
-          </TouchableOpacity>
+            {QUICK_QUESTIONS.map((question, index) => (
+              <TouchableOpacity
+                key={index}
+                style={dynamic.quickReplyChip}
+                onPress={() => handleQuickQuestion(question)}
+              >
+                <Text style={dynamic.quickReplyText}>{question}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <View style={dynamic.inputContainer}>
+            <TextInput
+              style={dynamic.textInput}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Ask me anything about nutrition..."
+              placeholderTextColor={theme.colors.textMuted}
+              multiline
+              maxLength={500}
+              editable={!isLoading}
+            />
+            <TouchableOpacity
+              style={[dynamic.sendButton, (!inputText.trim() || isLoading) && dynamic.sendButtonDisabled]}
+              onPress={() => sendMessage(inputText)}
+              disabled={!inputText.trim() || isLoading}
+            >
+              <Send size={20} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({});
+function TypingIndicator() {
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const createAnimation = (value: Animated.Value, delay: number) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(value, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(value, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+    };
+
+    Animated.parallel([
+      createAnimation(dot1, 0),
+      createAnimation(dot2, 200),
+      createAnimation(dot3, 400),
+    ]).start();
+  }, []);
+
+  const opacity1 = dot1.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
+  const opacity2 = dot2.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
+  const opacity3 = dot3.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
+
+  return (
+    <View style={styles.typingIndicator}>
+      <Animated.View style={[styles.typingDot, { opacity: opacity1 }]} />
+      <Animated.View style={[styles.typingDot, { opacity: opacity2 }]} />
+      <Animated.View style={[styles.typingDot, { opacity: opacity3 }]} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  typingIndicator: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#9CA3AF',
+  },
+});
 
 const stylesWithTheme = (Theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Theme.colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: Theme.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border,
-    gap: 12,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Theme.colors.text,
+  headerButton: {
+    padding: 8,
   },
   content: {
     flex: 1,
@@ -258,37 +333,62 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   messagesContent: {
     padding: 16,
   },
-  messageContainer: {
-    marginBottom: 16,
-  },
-  userMessageContainer: {
-    alignItems: 'flex-end',
-  },
-  aiMessageContainer: {
-    alignItems: 'flex-start',
-  },
-  messageHeader: {
+  messageRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-    gap: 6,
+    marginBottom: 16,
+    gap: 12,
   },
-  messageTime: {
-    fontSize: 12,
+  userMessageRow: {
+    justifyContent: 'flex-end',
+  },
+  aiMessageRow: {
+    justifyContent: 'flex-start',
+  },
+  avatarContainer: {
+    width: 40,
+  },
+  aiAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiAvatarText: {
+    fontSize: 20,
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userAvatarText: {
+    fontSize: 20,
+  },
+  messageContent: {
+    flex: 1,
+    maxWidth: '75%',
+  },
+  messageSender: {
+    fontSize: 13,
     color: Theme.colors.textMuted,
+    marginBottom: 4,
   },
   messageBubble: {
-    maxWidth: '80%',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 20,
+    borderRadius: 12,
   },
   userMessageBubble: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#137fec',
     borderBottomRightRadius: 4,
   },
   aiMessageBubble: {
-    backgroundColor: '#007AFF',
+    backgroundColor: Theme.colors.surface,
     borderBottomLeftRadius: 4,
   },
   messageText: {
@@ -299,76 +399,69 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     color: 'white',
   },
   aiMessageText: {
-    color: 'white',
-  },
-  loadingContainer: {
-    alignItems: 'flex-start',
-    marginBottom: 16,
+    color: Theme.colors.text,
   },
   loadingBubble: {
     backgroundColor: Theme.colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 20,
+    borderRadius: 12,
     borderBottomLeftRadius: 4,
   },
-  loadingText: {
-    fontSize: 16,
-    color: Theme.colors.textMuted,
-    fontStyle: 'italic',
+  inputWrapper: {
+    backgroundColor: Theme.colors.background,
   },
-  quickQuestionsContainer: {
-    marginTop: 20,
+  quickRepliesScroll: {
+    maxHeight: 48,
   },
-  quickQuestionsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Theme.colors.text,
-    marginBottom: 12,
+  quickRepliesContent: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
   },
-  quickQuestionButton: {
+  quickReplyChip: {
+    height: 36,
+    paddingHorizontal: 16,
+    borderRadius: 18,
     backgroundColor: Theme.colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
     borderWidth: 1,
     borderColor: Theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  quickQuestionText: {
+  quickReplyText: {
     fontSize: 14,
-    color: '#007AFF',
+    fontWeight: '500',
+    color: Theme.colors.text,
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: Theme.colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: Theme.colors.border,
-    gap: 12,
+    gap: 8,
   },
   textInput: {
     flex: 1,
     borderWidth: 1,
     borderColor: Theme.colors.border,
-    borderRadius: 20,
+    borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
     maxHeight: 100,
-    backgroundColor: Theme.colors.accent,
+    backgroundColor: Theme.colors.surface,
     color: Theme.colors.text,
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f0f8ff',
+    backgroundColor: '#137fec',
   },
   sendButtonDisabled: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Theme.colors.border,
   },
 });
