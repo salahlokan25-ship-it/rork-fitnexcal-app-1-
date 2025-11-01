@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, Camera, Search, MessageCircle, Settings, Plus } from 'lucide-react-native';
+import { Home, Camera, Search, MessageCircle, Settings, Plus, Heart, Brain } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/theme';
@@ -124,6 +124,20 @@ function RootLayoutNav() {
         options={{
           title: 'Chat',
           tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="wellness"
+        options={{
+          title: 'Wellness',
+          tabBarIcon: ({ color, size }) => <Heart color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="mindfulness"
+        options={{
+          title: 'Mind',
+          tabBarIcon: ({ color, size }) => <Brain color={color} size={size} />,
         }}
       />
       <Tabs.Screen
