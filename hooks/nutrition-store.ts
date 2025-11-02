@@ -108,12 +108,12 @@ function getWeekStart(date: Date): string {
 }
 
 export const [NutritionProvider, useNutrition] = createContextHook(() => {
+  const { user } = useUser();
   const [dailyNutrition, setDailyNutrition] = useState<DailyNutrition | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [weeklySettings, setWeeklySettings] = useState<WeeklyGoalSettings>({ enabled: false, buffer_enabled: false });
   const [weeklySummary, setWeeklySummary] = useState<WeeklySummary | null>(null);
   const [healthAlerts, setHealthAlerts] = useState<HealthAlert[]>([]);
-  const { user } = useUser();
 
   const getTodayKey = () => {
     return getISODate(new Date());
