@@ -191,31 +191,7 @@ export default function ScanScreen() {
             style={styles.camera}
             facing={facing}
             enableTorch={flashEnabled}
-          >
-            <View style={styles.infoOverlay}>
-              <View style={styles.infoCard}>
-                <Text style={styles.infoTitle}>Salmon with Asparagus</Text>
-                <View style={styles.infoStats}>
-                  <View style={styles.infoStat}>
-                    <Text style={styles.infoStatValue}>350</Text>
-                    <Text style={styles.infoStatLabel}>Calories</Text>
-                  </View>
-                  <View style={styles.infoStat}>
-                    <Text style={styles.infoStatValue}>40g</Text>
-                    <Text style={styles.infoStatLabel}>Proteins</Text>
-                  </View>
-                  <View style={styles.infoStat}>
-                    <Text style={styles.infoStatValue}>20g</Text>
-                    <Text style={styles.infoStatLabel}>Fat</Text>
-                  </View>
-                  <View style={styles.infoStat}>
-                    <Text style={styles.infoStatValue}>5g</Text>
-                    <Text style={styles.infoStatLabel}>Carbs</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </CameraView>
+          />
         </View>
 
         <View style={styles.bottomSection}>
@@ -321,42 +297,7 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-  infoOverlay: {
-    position: 'absolute',
-    top: 16,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  infoCard: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 12,
-    padding: 12,
-    backdropFilter: 'blur(10px)',
-  },
-  infoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'white',
-    marginBottom: 8,
-  },
-  infoStats: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  infoStat: {
-    alignItems: 'center',
-  },
-  infoStatValue: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: 'white',
-  },
-  infoStatLabel: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginTop: 2,
-  },
+
   bottomSection: {
     paddingTop: 24,
   },
