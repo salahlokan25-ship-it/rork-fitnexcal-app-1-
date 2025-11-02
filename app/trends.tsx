@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { ArrowLeft, ChevronRight } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions, Pressable } from 'react-native';
+import { ArrowLeft, ChevronRight, MoreVertical } from 'lucide-react-native';
+import { router, Stack } from 'expo-router';
 import { useTheme } from '@/hooks/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNutrition } from '@/hooks/nutrition-store';
 import { useWorkout } from '@/hooks/workout-store';
 import { useSleep } from '@/hooks/sleep-store';
@@ -14,11 +13,10 @@ type PeriodType = '7D' | '1M' | '3M' | '6M';
 
 export default function TrendsScreen() {
   const { theme, hydrated } = useTheme();
-  const insets = useSafeAreaInsets();
   const { width: screenW } = useWindowDimensions();
-  const { loadHistoryRange } = useNutrition();
+  const { loadHistoryRange, dailyNutrition } = useNutrition();
   const { workouts } = useWorkout();
-  const { getSleepHistory } = useSleep();
+  const { getSleepHistory, sleepEntries } = useSleep();
   const { user } = useUser();
   
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('3M');
@@ -26,24 +24,29 @@ export default function TrendsScreen() {
   const [nutritionData, setNutritionData] = useState<{ calories: number; protein: number; carbs: number }[]>([]);
   const [workoutData, setWorkoutData] = useState<{ workouts: number; time: number; calories: number }[]>([]);
   const [sleepData, setSleepData] = useState<{ avgSleep: number; quality: number; deepSleep: number }[]>([]);
+  const [hasData, setHasData] = useState<{ weight: boolean; nutrition: boolean; workout: boolean; sleep: boolean }>({ weight: false, nutrition: false, workout: false, sleep: false });
 
   const loadData = useCallback(async () => {
     try {
       const days = selectedPeriod === '7D' ? 7 : selectedPeriod === '1M' ? 30 : selectedPeriod === '3M' ? 90 : 180;
       
       const hist = await loadHistoryRange(days);
+      const hasNutritionData = hist.some(h => h.calories > 0 || h.protein > 0 || h.carbs > 0);
       
       const weights: number[] = [];
-      for (let i = 0; i < 30; i++) {
-        const baseWeight = user?.weight || 72;
-        const variation = Math.sin(i / 5) * 2 + (Math.random() - 0.5);
-        weights.push(baseWeight + variation - (i * 0.08));
+      const hasWeight = Boolean(user?.weight && user.weight > 0);
+      if (hasWeight) {
+        for (let i = 0; i < 30; i++) {
+          const baseWeight = user?.weight || 72;
+          const variation = Math.sin(i / 5) * 2 + (Math.random() - 0.5);
+          weights.push(baseWeight + variation - (i * 0.08));
+        }
       }
       setWeightData(weights);
 
-      const avgCalories = hist.length > 0 ? Math.round(hist.reduce((sum, h) => sum + h.calories, 0) / hist.length) : 1850;
-      const avgProtein = hist.length > 0 ? Math.round(hist.reduce((sum, h) => sum + h.protein, 0) / hist.length) : 120;
-      const avgCarbs = hist.length > 0 ? Math.round(hist.reduce((sum, h) => sum + h.carbs, 0) / hist.length) : 145;
+      const avgCalories = hist.length > 0 && hasNutritionData ? Math.round(hist.reduce((sum, h) => sum + h.calories, 0) / hist.length) : 0;
+      const avgProtein = hist.length > 0 && hasNutritionData ? Math.round(hist.reduce((sum, h) => sum + h.protein, 0) / hist.length) : 0;
+      const avgCarbs = hist.length > 0 && hasNutritionData ? Math.round(hist.reduce((sum, h) => sum + h.carbs, 0) / hist.length) : 0;
       
       setNutritionData([{ calories: avgCalories, protein: avgProtein, carbs: avgCarbs }]);
 
@@ -52,12 +55,20 @@ export default function TrendsScreen() {
       const totalTime = recentWorkouts.reduce((sum, w) => sum + (w.duration || 45), 0);
       const totalCals = recentWorkouts.reduce((sum, w) => sum + w.calories, 0);
       
-      setWorkoutData([{ workouts: totalWorkouts || 4, time: totalTime || 195, calories: totalCals || 1250 }]);
+      setWorkoutData([{ workouts: totalWorkouts, time: totalTime, calories: totalCals }]);
 
       const sleepHistory = getSleepHistory(30);
-      const avgSleep = sleepHistory.length > 0 ? sleepHistory.reduce((sum, s) => sum + s.hours, 0) / sleepHistory.length : 7.5;
+      const hasSleepData = sleepHistory.some(s => s.hours > 0);
+      const avgSleep = hasSleepData ? sleepHistory.reduce((sum, s) => sum + s.hours, 0) / sleepHistory.length : 0;
       
-      setSleepData([{ avgSleep: avgSleep, quality: 85, deepSleep: 1.75 }]);
+      setSleepData([{ avgSleep: avgSleep, quality: hasSleepData ? 85 : 0, deepSleep: hasSleepData ? 1.75 : 0 }]);
+
+      setHasData({
+        weight: hasWeight,
+        nutrition: hasNutritionData,
+        workout: totalWorkouts > 0,
+        sleep: hasSleepData
+      });
     } catch (error) {
       console.error('Error loading trends data:', error);
     }
@@ -73,22 +84,36 @@ export default function TrendsScreen() {
   const chartHeight = 160;
 
   if (!hydrated) {
-    return <View style={{ flex: 1, backgroundColor: '#0B1220' }} />;
+    return <View style={{ flex: 1, backgroundColor: '#0d1117' }} />;
   }
 
   return (
     <View style={dynamic.container}>
-      <View style={[dynamic.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={dynamic.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={dynamic.title}>Trends</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: theme.colors.background,
+          },
+          headerTintColor: theme.colors.text,
+          headerTitle: 'Trends',
+          headerTitleAlign: 'center',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ padding: 8 }}>
+              <ArrowLeft size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity style={{ padding: 8 }}>
+              <MoreVertical size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
 
       <View style={dynamic.periodSelector}>
         {(['7D', '1M', '3M', '6M'] as PeriodType[]).map((period) => (
-          <TouchableOpacity
+          <Pressable
             key={period}
             style={[
               dynamic.periodButton,
@@ -104,26 +129,35 @@ export default function TrendsScreen() {
             >
               {period}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </View>
 
-      <ScrollView style={dynamic.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={dynamic.content} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
         <View style={dynamic.card}>
           <View style={dynamic.cardHeader}>
             <Text style={dynamic.cardTitle}>Weight Progress</Text>
             <ChevronRight size={20} color={theme.colors.textMuted} />
           </View>
-          <Text style={dynamic.mainValue}>
-            {weightData.length > 0 ? weightData[weightData.length - 1].toFixed(1) : '165.5'} lbs
-          </Text>
-          <View style={dynamic.changeRow}>
-            <Text style={dynamic.changeLabelText}>Last 30 days</Text>
-            <Text style={dynamic.changeValueGreen}>↓ -2.5 lbs</Text>
-          </View>
-          <View style={{ marginTop: 16 }}>
-            <WeightChart data={weightData} width={chartWidth} height={chartHeight} theme={theme} />
-          </View>
+          {hasData.weight ? (
+            <>
+              <Text style={dynamic.mainValue}>
+                {weightData.length > 0 ? weightData[weightData.length - 1].toFixed(1) : user?.weight?.toFixed(1) || '0'} lbs
+              </Text>
+              <View style={dynamic.changeRow}>
+                <Text style={dynamic.changeLabelText}>Last 30 days</Text>
+                <Text style={dynamic.changeValueGreen}>↓ -2.5 lbs</Text>
+              </View>
+              <View style={{ marginTop: 16 }}>
+                <WeightChart data={weightData} width={chartWidth} height={chartHeight} theme={theme} />
+              </View>
+            </>
+          ) : (
+            <View style={dynamic.emptyState}>
+              <Text style={dynamic.emptyStateText}>No weight data tracked yet</Text>
+              <Text style={dynamic.emptyStateSubtext}>Start tracking your weight to see progress over time</Text>
+            </View>
+          )}
         </View>
 
         <View style={dynamic.card}>
@@ -131,26 +165,35 @@ export default function TrendsScreen() {
             <Text style={dynamic.cardTitle}>Nutrition Intake</Text>
             <ChevronRight size={20} color={theme.colors.textMuted} />
           </View>
-          <View style={dynamic.statsGrid}>
-            <View style={dynamic.statItem}>
-              <Text style={dynamic.statLabel}>Calories</Text>
-              <Text style={dynamic.statValue}>{nutritionData[0]?.calories || 1850}</Text>
-              <Text style={dynamic.statChangeRed}>-100</Text>
+          {hasData.nutrition ? (
+            <>
+              <View style={dynamic.statsGrid}>
+                <View style={dynamic.statItem}>
+                  <Text style={dynamic.statLabel}>Calories</Text>
+                  <Text style={dynamic.statValue}>{nutritionData[0]?.calories || 0}</Text>
+                  <Text style={dynamic.statChangeRed}>-100</Text>
+                </View>
+                <View style={dynamic.statItem}>
+                  <Text style={dynamic.statLabel}>Protein</Text>
+                  <Text style={dynamic.statValue}>{nutritionData[0]?.protein || 0}g</Text>
+                  <Text style={dynamic.statChangeGreen}>+10g</Text>
+                </View>
+                <View style={dynamic.statItem}>
+                  <Text style={dynamic.statLabel}>Carbs</Text>
+                  <Text style={dynamic.statValue}>{nutritionData[0]?.carbs || 0}g</Text>
+                  <Text style={dynamic.statChangeRed}>-20g</Text>
+                </View>
+              </View>
+              <View style={{ marginTop: 16 }}>
+                <SimpleLineChart width={chartWidth} height={96} theme={theme} />
+              </View>
+            </>
+          ) : (
+            <View style={dynamic.emptyState}>
+              <Text style={dynamic.emptyStateText}>No nutrition data tracked yet</Text>
+              <Text style={dynamic.emptyStateSubtext}>Start logging meals to see your nutrition trends</Text>
             </View>
-            <View style={dynamic.statItem}>
-              <Text style={dynamic.statLabel}>Protein</Text>
-              <Text style={dynamic.statValue}>{nutritionData[0]?.protein || 120}g</Text>
-              <Text style={dynamic.statChangeGreen}>+10g</Text>
-            </View>
-            <View style={dynamic.statItem}>
-              <Text style={dynamic.statLabel}>Carbs</Text>
-              <Text style={dynamic.statValue}>{nutritionData[0]?.carbs || 145}g</Text>
-              <Text style={dynamic.statChangeRed}>-20g</Text>
-            </View>
-          </View>
-          <View style={{ marginTop: 16 }}>
-            <SimpleLineChart width={chartWidth} height={96} theme={theme} />
-          </View>
+          )}
         </View>
 
         <View style={dynamic.card}>
@@ -158,63 +201,80 @@ export default function TrendsScreen() {
             <Text style={dynamic.cardTitle}>Workout Activity</Text>
             <ChevronRight size={20} color={theme.colors.textMuted} />
           </View>
-          <View style={dynamic.statsGrid}>
-            <View style={dynamic.statItem}>
-              <Text style={dynamic.statLabel}>Workouts</Text>
-              <Text style={dynamic.statValue}>{workoutData[0]?.workouts || 4}</Text>
-              <Text style={dynamic.statChangeGreen}>+1</Text>
+          {hasData.workout ? (
+            <>
+              <View style={dynamic.statsGrid}>
+                <View style={dynamic.statItem}>
+                  <Text style={dynamic.statLabel}>Workouts</Text>
+                  <Text style={dynamic.statValue}>{workoutData[0]?.workouts || 0}</Text>
+                  <Text style={dynamic.statChangeGreen}>+1</Text>
+                </View>
+                <View style={dynamic.statItem}>
+                  <Text style={dynamic.statLabel}>Time</Text>
+                  <Text style={dynamic.statValue}>{Math.floor((workoutData[0]?.time || 0) / 60)}h {(workoutData[0]?.time || 0) % 60}m</Text>
+                  <Text style={dynamic.statChangeGreen}>+30m</Text>
+                </View>
+                <View style={dynamic.statItem}>
+                  <Text style={dynamic.statLabel}>Calories</Text>
+                  <Text style={dynamic.statValue}>{workoutData[0]?.calories || 0}</Text>
+                  <Text style={dynamic.statChangeGreen}>+200</Text>
+                </View>
+              </View>
+              <View style={{ marginTop: 16 }}>
+                <SimpleLineChart width={chartWidth} height={96} theme={theme} variant={2} />
+              </View>
+            </>
+          ) : (
+            <View style={dynamic.emptyState}>
+              <Text style={dynamic.emptyStateText}>No workout data tracked yet</Text>
+              <Text style={dynamic.emptyStateSubtext}>Start logging workouts to see your activity trends</Text>
             </View>
-            <View style={dynamic.statItem}>
-              <Text style={dynamic.statLabel}>Time</Text>
-              <Text style={dynamic.statValue}>{Math.floor((workoutData[0]?.time || 195) / 60)}h {(workoutData[0]?.time || 195) % 60}m</Text>
-              <Text style={dynamic.statChangeGreen}>+30m</Text>
-            </View>
-            <View style={dynamic.statItem}>
-              <Text style={dynamic.statLabel}>Calories</Text>
-              <Text style={dynamic.statValue}>{workoutData[0]?.calories || 1250}</Text>
-              <Text style={dynamic.statChangeGreen}>+200</Text>
-            </View>
-          </View>
-          <View style={{ marginTop: 16 }}>
-            <SimpleLineChart width={chartWidth} height={96} theme={theme} variant={2} />
-          </View>
+          )}
         </View>
 
-        <View style={[dynamic.card, { marginBottom: 24 }]}>
+        <View style={dynamic.card}>
           <View style={dynamic.cardHeader}>
             <Text style={dynamic.cardTitle}>Sleep Tracking</Text>
             <ChevronRight size={20} color={theme.colors.textMuted} />
           </View>
-          <View style={dynamic.statsGrid}>
-            <View style={dynamic.statItem}>
-              <Text style={dynamic.statLabel}>Avg Sleep</Text>
-              <Text style={dynamic.statValue}>{sleepData[0]?.avgSleep.toFixed(0) || 7}h 30m</Text>
-              <Text style={dynamic.statChangeGreen}>+15m</Text>
+          {hasData.sleep ? (
+            <>
+              <View style={dynamic.statsGrid}>
+                <View style={dynamic.statItem}>
+                  <Text style={dynamic.statLabel}>Avg Sleep</Text>
+                  <Text style={dynamic.statValue}>{sleepData[0]?.avgSleep > 0 ? Math.floor(sleepData[0].avgSleep) : 0}h 30m</Text>
+                  <Text style={dynamic.statChangeGreen}>+15m</Text>
+                </View>
+                <View style={dynamic.statItem}>
+                  <Text style={dynamic.statLabel}>Quality</Text>
+                  <Text style={dynamic.statValue}>{sleepData[0]?.quality || 0}%</Text>
+                  <Text style={dynamic.statChangeGreen}>+5%</Text>
+                </View>
+                <View style={dynamic.statItem}>
+                  <Text style={dynamic.statLabel}>Deep Sleep</Text>
+                  <Text style={dynamic.statValue}>{sleepData[0]?.deepSleep > 0 ? Math.floor(sleepData[0].deepSleep) : 0}h 45m</Text>
+                  <Text style={dynamic.statChangeGreen}>+10m</Text>
+                </View>
+              </View>
+              <View style={{ marginTop: 16 }}>
+                <SimpleLineChart width={chartWidth} height={96} theme={theme} variant={3} />
+              </View>
+            </>
+          ) : (
+            <View style={dynamic.emptyState}>
+              <Text style={dynamic.emptyStateText}>No sleep data tracked yet</Text>
+              <Text style={dynamic.emptyStateSubtext}>Start logging sleep to see your sleep quality trends</Text>
             </View>
-            <View style={dynamic.statItem}>
-              <Text style={dynamic.statLabel}>Quality</Text>
-              <Text style={dynamic.statValue}>{sleepData[0]?.quality || 85}%</Text>
-              <Text style={dynamic.statChangeGreen}>+5%</Text>
-            </View>
-            <View style={dynamic.statItem}>
-              <Text style={dynamic.statLabel}>Deep Sleep</Text>
-              <Text style={dynamic.statValue}>{sleepData[0]?.deepSleep.toFixed(0) || 1}h 45m</Text>
-              <Text style={dynamic.statChangeGreen}>+10m</Text>
-            </View>
-          </View>
-          <View style={{ marginTop: 16 }}>
-            <SimpleLineChart width={chartWidth} height={96} theme={theme} variant={3} />
-          </View>
+          )}
         </View>
       </ScrollView>
     </View>
   );
 }
 
-function WeightChart({ data, width, height, theme }: { data: number[]; width: number; height: number; theme: any }) {
+function WeightChart({ data, width, height }: { data: number[]; width: number; height: number; theme: any }) {
   if (data.length === 0) return null;
 
-  const padding = 0;
   const chartWidth = width;
   const chartHeight = height;
 
@@ -254,7 +314,7 @@ function WeightChart({ data, width, height, theme }: { data: number[]; width: nu
   );
 }
 
-function SimpleLineChart({ width, height, theme, variant = 1 }: { width: number; height: number; theme: any; variant?: number }) {
+function SimpleLineChart({ width, height, variant = 1 }: { width: number; height: number; theme: any; variant?: number }) {
   const data = Array.from({ length: 15 }, (_, i) => {
     const base = 50;
     const wave = Math.sin(i / 2) * 30;
@@ -303,34 +363,13 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     flex: 1,
     backgroundColor: Theme.colors.background,
   },
-  header: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'space-between' as const,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border,
-    backgroundColor: Theme.colors.background,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: Theme.colors.text,
-  },
   periodSelector: {
     flexDirection: 'row' as const,
-    backgroundColor: Theme.colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     margin: 16,
+    marginBottom: 0,
     padding: 4,
     borderRadius: 12,
-    gap: 4,
   },
   periodButton: {
     flex: 1,
@@ -338,9 +377,15 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     borderRadius: 8,
+    marginHorizontal: 2,
   },
   periodButtonActive: {
-    backgroundColor: Theme.colors.background,
+    backgroundColor: '#1f2937',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   periodButtonText: {
     fontSize: 14,
@@ -355,13 +400,13 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     flex: 1,
   },
   card: {
-    backgroundColor: Theme.colors.surface,
+    backgroundColor: '#1f2937',
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginTop: 16,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: Theme.colors.border,
+    borderColor: '#374151',
   },
   cardHeader: {
     flexDirection: 'row' as const,
@@ -422,5 +467,23 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   statChangeRed: {
     fontSize: 12,
     color: '#EF4444',
+  },
+  emptyState: {
+    paddingVertical: 32,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Theme.colors.text,
+    marginBottom: 8,
+    textAlign: 'center' as const,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: Theme.colors.textMuted,
+    textAlign: 'center' as const,
+    maxWidth: 260,
   },
 });
