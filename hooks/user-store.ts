@@ -12,10 +12,17 @@ type StreakData = {
   weeklyLogs: boolean[];
 };
 
+type WeightEntry = {
+  date: string;
+  weight: number;
+  timestamp: number;
+};
+
 const AUTH_KEY = 'auth_user';
 const ONBOARDING_KEY = 'onboarding_completed';
 const USER_PROFILE_KEY = 'user_profile';
 const STREAK_KEY = 'user_streak';
+const WEIGHT_HISTORY_KEY = 'weight_history';
 
 const onboardingKeyFor = (email: string) => `${ONBOARDING_KEY}:${email.toLowerCase()}`;
 
@@ -55,6 +62,7 @@ export const [UserProvider, useUser] = createContextHook(() => {
     lastLogDate: '',
     weeklyLogs: [false, false, false, false, false, false, false],
   });
+  const [weightHistory, setWeightHistory] = useState<WeightEntry[]>([]);
 
   const loadState = useCallback(async () => {
     console.log('[UserStore] Loading state');
@@ -87,6 +95,11 @@ export const [UserProvider, useUser] = createContextHook(() => {
         const storedStreak = await AsyncStorage.getItem(STREAK_KEY);
         if (storedStreak) {
           setStreakData(JSON.parse(storedStreak));
+        }
+
+        const storedWeightHistory = await AsyncStorage.getItem(WEIGHT_HISTORY_KEY);
+        if (storedWeightHistory) {
+          setWeightHistory(JSON.parse(storedWeightHistory));
         }
       } else {
         setAuthUser(null);
@@ -175,6 +188,14 @@ export const [UserProvider, useUser] = createContextHook(() => {
           is_premium: false,
         };
 
+        const initialWeightEntry: WeightEntry = {
+          date: new Date().toISOString().split('T')[0],
+          weight: profileData.weight,
+          timestamp: Date.now(),
+        };
+        await AsyncStorage.setItem(WEIGHT_HISTORY_KEY, JSON.stringify([initialWeightEntry]));
+        setWeightHistory([initialWeightEntry]);
+
         await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(newUser));
         setUser(newUser);
         return newUser;
@@ -204,6 +225,17 @@ export const [UserProvider, useUser] = createContextHook(() => {
           Object.assign(updatedUser, goals);
         }
 
+        if (updates.weight !== undefined && updates.weight !== user.weight) {
+          const newEntry: WeightEntry = {
+            date: new Date().toISOString().split('T')[0],
+            weight: updates.weight,
+            timestamp: Date.now(),
+          };
+          const updatedHistory = [...weightHistory, newEntry];
+          await AsyncStorage.setItem(WEIGHT_HISTORY_KEY, JSON.stringify(updatedHistory));
+          setWeightHistory(updatedHistory);
+        }
+
         await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(updatedUser));
         setUser(updatedUser);
       } catch (error) {
@@ -211,7 +243,7 @@ export const [UserProvider, useUser] = createContextHook(() => {
         throw error;
       }
     },
-    [user],
+    [user, weightHistory],
   );
 
   const completeOnboarding = useCallback(async () => {
@@ -271,6 +303,12 @@ export const [UserProvider, useUser] = createContextHook(() => {
     }
   }, [streakData]);
 
+  const getWeightHistory = useCallback((days?: number) => {
+    if (!days) return weightHistory;
+    const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+    return weightHistory.filter(entry => entry.timestamp >= cutoff);
+  }, [weightHistory]);
+
   return useMemo(
     () => ({
       user,
@@ -279,6 +317,7 @@ export const [UserProvider, useUser] = createContextHook(() => {
       isAuthenticated,
       authUser,
       streakData,
+      weightHistory,
       signIn,
       signUp,
       signOut,
@@ -287,6 +326,7 @@ export const [UserProvider, useUser] = createContextHook(() => {
       completeOnboarding,
       upgradeToPremium,
       updateStreak,
+      getWeightHistory,
     }),
     [
       user,
@@ -295,6 +335,7 @@ export const [UserProvider, useUser] = createContextHook(() => {
       isAuthenticated,
       authUser,
       streakData,
+      weightHistory,
       signIn,
       signUp,
       signOut,
@@ -303,6 +344,7 @@ export const [UserProvider, useUser] = createContextHook(() => {
       completeOnboarding,
       upgradeToPremium,
       updateStreak,
+      getWeightHistory,
     ],
   );
 });

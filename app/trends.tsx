@@ -17,7 +17,7 @@ export default function TrendsScreen() {
   const { loadHistoryRange, dailyNutrition } = useNutrition();
   const { workouts } = useWorkout();
   const { getSleepHistory, sleepEntries } = useSleep();
-  const { user } = useUser();
+  const { user, getWeightHistory } = useUser();
   
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('3M');
   const [weightData, setWeightData] = useState<number[]>([]);
@@ -33,15 +33,9 @@ export default function TrendsScreen() {
       const hist = await loadHistoryRange(days);
       const hasNutritionData = hist.some(h => h.calories > 0 || h.protein > 0 || h.carbs > 0);
       
-      const weights: number[] = [];
-      const hasWeight = Boolean(user?.weight && user.weight > 0);
-      if (hasWeight) {
-        for (let i = 0; i < 30; i++) {
-          const baseWeight = user?.weight || 72;
-          const variation = Math.sin(i / 5) * 2 + (Math.random() - 0.5);
-          weights.push(baseWeight + variation - (i * 0.08));
-        }
-      }
+      const weightHistoryData = getWeightHistory(days);
+      const weights = weightHistoryData.map(entry => entry.weight);
+      const hasWeight = weights.length > 0;
       setWeightData(weights);
 
       const avgCalories = hist.length > 0 && hasNutritionData ? Math.round(hist.reduce((sum, h) => sum + h.calories, 0) / hist.length) : 0;
@@ -72,7 +66,7 @@ export default function TrendsScreen() {
     } catch (error) {
       console.error('Error loading trends data:', error);
     }
-  }, [selectedPeriod, loadHistoryRange, workouts, getSleepHistory, user]);
+  }, [selectedPeriod, loadHistoryRange, workouts, getSleepHistory, user, getWeightHistory]);
 
   useEffect(() => {
     void loadData();
@@ -146,7 +140,11 @@ export default function TrendsScreen() {
               </Text>
               <View style={dynamic.changeRow}>
                 <Text style={dynamic.changeLabelText}>Last 30 days</Text>
-                <Text style={dynamic.changeValueGreen}>↓ -1.1 kg</Text>
+                {weightData.length > 1 && (
+                  <Text style={weightData[0] > weightData[weightData.length - 1] ? dynamic.changeValueGreen : dynamic.changeValueRed}>
+                    {weightData[0] > weightData[weightData.length - 1] ? '↓' : '↑'} {Math.abs(weightData[0] - weightData[weightData.length - 1]).toFixed(1)} kg
+                  </Text>
+                )}
               </View>
               <View style={{ marginTop: 16 }}>
                 <WeightChart data={weightData} width={chartWidth} height={chartHeight} theme={theme} />
@@ -439,6 +437,11 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '500' as const,
     color: '#10B981',
+  },
+  changeValueRed: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: '#EF4444',
   },
   statsGrid: {
     flexDirection: 'row' as const,
