@@ -73,8 +73,8 @@ export default function TrendsScreen() {
   const chartHeight = 160;
 
   return (
-    <View style={[dynamic.container, { paddingTop: insets.top }]}>
-      <View style={dynamic.header}>
+    <View style={dynamic.container}>
+      <View style={[dynamic.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={dynamic.backButton} onPress={() => router.back()}>
           <ArrowLeft size={24} color={theme.colors.text} />
         </TouchableOpacity>
@@ -307,6 +307,7 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: Theme.colors.border,
+    backgroundColor: Theme.colors.background,
   },
   backButton: {
     width: 40,
