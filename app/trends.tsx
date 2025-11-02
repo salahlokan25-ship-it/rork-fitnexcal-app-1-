@@ -142,11 +142,11 @@ export default function TrendsScreen() {
           {hasData.weight ? (
             <>
               <Text style={dynamic.mainValue}>
-                {weightData.length > 0 ? weightData[weightData.length - 1].toFixed(1) : user?.weight?.toFixed(1) || '0'} lbs
+                {weightData.length > 0 ? weightData[weightData.length - 1].toFixed(1) : user?.weight?.toFixed(1) || '0'} kg
               </Text>
               <View style={dynamic.changeRow}>
                 <Text style={dynamic.changeLabelText}>Last 30 days</Text>
-                <Text style={dynamic.changeValueGreen}>↓ -2.5 lbs</Text>
+                <Text style={dynamic.changeValueGreen}>↓ -1.1 kg</Text>
               </View>
               <View style={{ marginTop: 16 }}>
                 <WeightChart data={weightData} width={chartWidth} height={chartHeight} theme={theme} />
