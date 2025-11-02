@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, Linking } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, Zap, ArrowLeft, FlipHorizontal, ImagePlus } from 'lucide-react-native';
+import { Camera, Zap, ArrowLeft, FlipHorizontal, ImageIcon } from 'lucide-react-native';
 import { analyzeFoodImage } from '@/services/ai-service';
 import { router } from 'expo-router';
 import { useTheme } from '@/hooks/theme';
@@ -44,18 +44,58 @@ export default function ScanScreen() {
     };
 
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <View style={styles.permissionContainer}>
-          <Camera size={64} color="#007AFF" />
-          <Text style={[styles.permissionTitle, { color: theme.colors.text }]}>Camera Access Required</Text>
-          <Text style={[styles.permissionText, { color: theme.colors.textMuted }]}>
-            We need camera access to analyze your food photos and provide accurate calorie information.
-          </Text>
-          <TouchableOpacity testID="grant-permission" style={styles.permissionButton} onPress={handleRequestPermission}>
-            <Text style={styles.permissionButtonText}>Grant Permission</Text>
+      <View style={[styles.container, { backgroundColor: '#101922' }]}>
+        <SafeAreaView edges={['top']} style={styles.header}>
+          <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+            <ArrowLeft size={24} color="white" />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Scan Food</Text>
+          <TouchableOpacity style={styles.headerButton}>
+            <Zap size={24} color="white" />
+          </TouchableOpacity>
+        </SafeAreaView>
+
+        <View style={styles.permissionContent}>
+          <View style={styles.permissionPreview}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80' }} 
+              style={styles.permissionImage}
+            />
+            <View style={styles.permissionOverlay}>
+              <View style={styles.foodInfoCard}>
+                <Text style={styles.foodName}>Salmon with Asparagus</Text>
+                <View style={styles.nutritionRow}>
+                  <View style={styles.nutritionItem}>
+                    <Text style={styles.nutritionValue}>350</Text>
+                    <Text style={styles.nutritionLabel}>Calories</Text>
+                  </View>
+                  <View style={styles.nutritionItem}>
+                    <Text style={styles.nutritionValue}>40g</Text>
+                    <Text style={styles.nutritionLabel}>Proteins</Text>
+                  </View>
+                  <View style={styles.nutritionItem}>
+                    <Text style={styles.nutritionValue}>20g</Text>
+                    <Text style={styles.nutritionLabel}>Fat</Text>
+                  </View>
+                  <View style={styles.nutritionItem}>
+                    <Text style={styles.nutritionValue}>5g</Text>
+                    <Text style={styles.nutritionLabel}>Carbs</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.permissionBottom}>
+            <Text style={styles.permissionInstructionText}>
+              Center your meal in the frame and tap the button to capture.
+            </Text>
+            <TouchableOpacity testID="grant-permission" style={styles.grantButton} onPress={handleRequestPermission}>
+              <Text style={styles.grantButtonText}>Grant Camera Access</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -204,7 +244,7 @@ export default function ScanScreen() {
               style={[styles.secondaryButton, { backgroundColor: theme.colors.surface }]} 
               onPress={pickImage}
             >
-              <ImagePlus size={24} color={theme.colors.text} />
+              <ImageIcon size={24} color={theme.colors.text} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -236,34 +276,80 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  permissionContainer: {
+  permissionContent: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  permissionPreview: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#18181b',
+    position: 'relative',
+  },
+  permissionImage: {
+    width: '100%',
+    height: '100%',
+  },
+  permissionOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
     alignItems: 'center',
-    paddingHorizontal: 32,
+    justifyContent: 'center',
   },
-  permissionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 24,
-    marginBottom: 16,
+  foodInfoCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 12,
+    padding: 12,
+    backdropFilter: 'blur(8px)',
+  },
+  foodName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 8,
     textAlign: 'center',
   },
-  permissionText: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
+  nutritionRow: {
+    flexDirection: 'row',
+    gap: 16,
   },
-  permissionButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 32,
+  nutritionItem: {
+    alignItems: 'center',
+  },
+  nutritionValue: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'white',
+  },
+  nutritionLabel: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 2,
+  },
+  permissionBottom: {
+    paddingTop: 24,
+  },
+  permissionInstructionText: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#9ca3af',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  grantButton: {
+    backgroundColor: '#137fec',
     paddingVertical: 16,
     borderRadius: 12,
+    alignItems: 'center',
   },
-  permissionButtonText: {
+  grantButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'white',
   },
   header: {
