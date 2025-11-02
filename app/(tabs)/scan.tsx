@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, Image as ImageIcon, Zap, BarChart3 } from 'lucide-react-native';
+import { Camera, Zap, ArrowLeft, FlipHorizontal, ImagePlus } from 'lucide-react-native';
 import { analyzeFoodImage } from '@/services/ai-service';
 import { router } from 'expo-router';
 import { useTheme } from '@/hooks/theme';
@@ -14,6 +14,7 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [flashEnabled, setFlashEnabled] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
   if (!permission) {
@@ -169,55 +170,89 @@ export default function ScanScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Scan Your Food</Text>
-        <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>Take a photo to get instant nutrition info</Text>
-      </View>
-
-      <View style={styles.cameraContainer}>
-        <CameraView
-          ref={cameraRef}
-          style={styles.camera}
-          facing={facing}
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView edges={['top']} style={[styles.header, { backgroundColor: theme.colors.background }]}>
+        <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+          <ArrowLeft size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Scan Food</Text>
+        <TouchableOpacity 
+          style={styles.headerButton} 
+          onPress={() => setFlashEnabled(!flashEnabled)}
         >
-          <View style={styles.cameraOverlay}>
-            <View style={styles.scanFrame} />
-            <Text style={styles.scanText}>Position food within the frame</Text>
-          </View>
-        </CameraView>
-      </View>
-
-      <View style={[styles.controls, { backgroundColor: theme.colors.background }]}>
-        <TouchableOpacity style={styles.controlButton} onPress={pickImage}>
-          <ImageIcon size={24} color="#007AFF" />
-          <Text style={styles.controlText}>Gallery</Text>
+          <Zap size={24} color={flashEnabled ? '#137fec' : theme.colors.text} />
         </TouchableOpacity>
+      </SafeAreaView>
 
-        <TouchableOpacity
-          style={styles.captureButton}
-          onPress={takePicture}
-          disabled={isAnalyzing}
-        >
-          <View style={styles.captureButtonInner} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.controlButton} onPress={toggleCameraFacing}>
-          <Camera size={24} color="#007AFF" />
-          <Text style={styles.controlText}>Flip</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={[styles.tips, { backgroundColor: theme.colors.background }]}>
-        <View style={styles.tipItem}>
-          <BarChart3 size={20} color="#007AFF" />
-          <Text style={[styles.tipText, { color: theme.colors.text }]}>Get accurate calorie counts instantly</Text>
+      <View style={styles.content}>
+        <View style={styles.cameraContainer}>
+          <CameraView
+            ref={cameraRef}
+            style={styles.camera}
+            facing={facing}
+            enableTorch={flashEnabled}
+          >
+            <View style={styles.infoOverlay}>
+              <View style={styles.infoCard}>
+                <Text style={styles.infoTitle}>Salmon with Asparagus</Text>
+                <View style={styles.infoStats}>
+                  <View style={styles.infoStat}>
+                    <Text style={styles.infoStatValue}>350</Text>
+                    <Text style={styles.infoStatLabel}>Calories</Text>
+                  </View>
+                  <View style={styles.infoStat}>
+                    <Text style={styles.infoStatValue}>40g</Text>
+                    <Text style={styles.infoStatLabel}>Proteins</Text>
+                  </View>
+                  <View style={styles.infoStat}>
+                    <Text style={styles.infoStatValue}>20g</Text>
+                    <Text style={styles.infoStatLabel}>Fat</Text>
+                  </View>
+                  <View style={styles.infoStat}>
+                    <Text style={styles.infoStatValue}>5g</Text>
+                    <Text style={styles.infoStatLabel}>Carbs</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </CameraView>
         </View>
-        <Text style={[styles.tipSubtext, { color: theme.colors.textMuted }]}>
-          For best results, ensure good lighting and include the entire meal in the frame
-        </Text>
+
+        <View style={styles.bottomSection}>
+          <Text style={[styles.instructionText, { color: theme.colors.textMuted }]}>
+            Center your meal in the frame and tap the button to capture.
+          </Text>
+
+          <View style={styles.controls}>
+            <TouchableOpacity 
+              style={[styles.secondaryButton, { backgroundColor: theme.colors.surface }]} 
+              onPress={pickImage}
+            >
+              <ImagePlus size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.captureButton}
+              onPress={takePicture}
+              disabled={isAnalyzing}
+            >
+              <View style={styles.captureButtonOuter}>
+                <View style={styles.captureButtonInner}>
+                  <Camera size={32} color="white" strokeWidth={2} fill="white" />
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.secondaryButton, { backgroundColor: theme.colors.surface }]} 
+              onPress={toggleCameraFacing}
+            >
+              <FlipHorizontal size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -256,100 +291,118 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  headerButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 4,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'space-between',
+    padding: 16,
   },
   cameraContainer: {
     flex: 1,
-    margin: 20,
-    borderRadius: 20,
+    borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: '#18181b',
   },
   camera: {
     flex: 1,
   },
-  cameraOverlay: {
-    flex: 1,
-    justifyContent: 'center',
+  infoOverlay: {
+    position: 'absolute',
+    top: 16,
+    left: 0,
+    right: 0,
     alignItems: 'center',
   },
-  scanFrame: {
-    width: 250,
-    height: 250,
-    borderWidth: 3,
-    borderColor: '#007AFF',
-    borderRadius: 20,
-    backgroundColor: 'transparent',
-  },
-  scanText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
-    marginTop: 20,
-    textAlign: 'center',
+  infoCard: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 12,
+    padding: 12,
+    backdropFilter: 'blur(10px)',
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 8,
+  },
+  infoStats: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  infoStat: {
+    alignItems: 'center',
+  },
+  infoStatValue: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'white',
+  },
+  infoStatLabel: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 2,
+  },
+  bottomSection: {
+    paddingTop: 24,
+  },
+  instructionText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
   },
   controls: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 20,
+    gap: 24,
   },
-  controlButton: {
+  secondaryButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-  },
-  controlText: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
   },
   captureButton: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  captureButtonOuter: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     borderWidth: 4,
-    borderColor: '#007AFF',
+    borderColor: '#137fec',
+    backgroundColor: 'rgba(19, 127, 236, 0.2)',
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   captureButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#007AFF',
-  },
-  tips: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  tipItem: {
-    flexDirection: 'row',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#137fec',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
-  },
-  tipText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  tipSubtext: {
-    fontSize: 14,
-    lineHeight: 20,
   },
   analysisContainer: {
     flex: 1,
