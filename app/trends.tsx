@@ -13,7 +13,7 @@ import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 type PeriodType = '7D' | '1M' | '3M' | '6M';
 
 export default function TrendsScreen() {
-  const { theme } = useTheme();
+  const { theme, hydrated } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: screenW } = useWindowDimensions();
   const { loadHistoryRange } = useNutrition();
@@ -71,6 +71,10 @@ export default function TrendsScreen() {
 
   const chartWidth = Math.min(screenW - 32, 400);
   const chartHeight = 160;
+
+  if (!hydrated) {
+    return <View style={{ flex: 1, backgroundColor: '#0B1220' }} />;
+  }
 
   return (
     <View style={dynamic.container}>
