@@ -139,12 +139,12 @@ export default function DashboardScreen() {
   return (
     <View style={[dynamic.container, { paddingTop: insets.top, backgroundColor: theme.colors.background }]}> 
       <View style={dynamic.headerBar}>
-        <View style={dynamic.avatarWrapper}>
-          {user.avatar_url ? (
-            <Image source={{ uri: user.avatar_url }} style={dynamic.avatar} />
-          ) : (
-            <View style={dynamic.avatarPlaceholder} />
-          )}
+        <View style={dynamic.logoWrapper}>
+          <Image 
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/186rmjvnezcgmqwgyxnfx' }} 
+            style={dynamic.appLogo} 
+            resizeMode="contain"
+          />
         </View>
         <Text style={dynamic.headerTitle}>Home</Text>
         <TouchableOpacity 
@@ -575,10 +575,6 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     fontWeight: 'bold',
     color: Theme.colors.text,
     letterSpacing: -0.5,
-  },
-  appLogo: {
-    width: 56,
-    height: 56,
   },
   brandRow: {
     flexDirection: 'row',
@@ -1345,21 +1341,15 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Theme.colors.border,
   } as const,
-  avatarWrapper: {
+  logoWrapper: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   } as const,
-  avatar: {
+  appLogo: {
     width: 48,
     height: 48,
-  } as const,
-  avatarPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Theme.colors.accent,
   } as const,
   headerTitle: {
     fontSize: 18,
