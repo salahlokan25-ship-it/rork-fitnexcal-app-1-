@@ -134,7 +134,7 @@ export default function SettingsScreen() {
         <View style={dynamic.sectionContainer}>
           <Text style={dynamic.sectionHeader}>Health & Dietary</Text>
           <View style={dynamic.cardContainer}>
-            <TouchableOpacity style={dynamic.menuItem} onPress={() => Alert.alert('Daily Calorie Goals', 'Adjust your daily calorie targets')}>
+            <TouchableOpacity style={dynamic.menuItem} onPress={() => router.push('/daily-calorie-goals')}>
               <View style={dynamic.menuItemLeft}>
                 <View style={[dynamic.iconCircle, { backgroundColor: 'rgba(75, 144, 226, 0.2)' }]}>
                   <Flame size={20} color={theme.colors.primary700} />
@@ -146,7 +146,7 @@ export default function SettingsScreen() {
 
             <View style={dynamic.divider} />
 
-            <TouchableOpacity style={dynamic.menuItem} onPress={() => Alert.alert('Macronutrient Targets', 'Set your protein, carbs, and fat targets')}>
+            <TouchableOpacity style={dynamic.menuItem} onPress={() => router.push('/macronutrient-targets')}>
               <View style={dynamic.menuItemLeft}>
                 <View style={[dynamic.iconCircle, { backgroundColor: 'rgba(75, 144, 226, 0.2)' }]}>
                   <PieChart size={20} color={theme.colors.primary700} />
@@ -158,7 +158,7 @@ export default function SettingsScreen() {
 
             <View style={dynamic.divider} />
 
-            <TouchableOpacity style={dynamic.menuItem} onPress={() => Alert.alert('Activity Level', 'Update your activity level')}>
+            <TouchableOpacity style={dynamic.menuItem} onPress={() => router.push('/activity-level')}>
               <View style={dynamic.menuItemLeft}>
                 <View style={[dynamic.iconCircle, { backgroundColor: 'rgba(75, 144, 226, 0.2)' }]}>
                   <Dumbbell size={20} color={theme.colors.primary700} />
@@ -170,7 +170,7 @@ export default function SettingsScreen() {
 
             <View style={dynamic.divider} />
 
-            <TouchableOpacity style={dynamic.menuItem} onPress={() => Alert.alert('Dietary Restrictions', 'Manage your dietary restrictions')}>
+            <TouchableOpacity style={dynamic.menuItem} onPress={() => router.push('/dietary-restrictions')}>
               <View style={dynamic.menuItemLeft}>
                 <View style={[dynamic.iconCircle, { backgroundColor: 'rgba(75, 144, 226, 0.2)' }]}>
                   <Sprout size={20} color={theme.colors.primary700} />
