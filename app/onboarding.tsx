@@ -364,7 +364,7 @@ export default function OnboardingScreen() {
 
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.headerBack} testID="onboarding-back">
-          <ChevronLeft size={22} color="#1a1a1a" />
+          <ChevronLeft size={22} color={stylesVars.text} />
         </TouchableOpacity>
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
@@ -392,16 +392,27 @@ export default function OnboardingScreen() {
   );
 }
 
+const stylesVars = {
+  bg: '#0B1220',
+  surface: '#121A2A',
+  primary: '#3B82F6',
+  text: '#E5E7EB',
+  textMuted: '#9AA3B2',
+  border: 'rgba(229,231,235,0.08)'
+} as const;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: stylesVars.bg,
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 4,
-    backgroundColor: '#fff',
+    backgroundColor: stylesVars.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: stylesVars.border,
   },
   headerBack: {
     width: 40,
@@ -412,14 +423,14 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#E8E8EA',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 2,
     overflow: 'hidden',
     marginTop: 8,
   },
   progressFill: {
     height: 4,
-    backgroundColor: '#1F6BFF',
+    backgroundColor: stylesVars.primary,
   },
   content: {
     flex: 1,
@@ -431,13 +442,13 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: stylesVars.text,
     marginBottom: 8,
     textAlign: 'left',
   },
   stepDescription: {
     fontSize: 16,
-    color: '#666',
+    color: stylesVars.textMuted,
     textAlign: 'left',
     marginBottom: 24,
     lineHeight: 22,
@@ -448,89 +459,92 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: stylesVars.text,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: stylesVars.border,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    backgroundColor: 'white',
+    backgroundColor: stylesVars.surface,
+    color: stylesVars.text,
   },
   row: {
     flexDirection: 'row',
   },
   optionCard: {
-    backgroundColor: 'white',
+    backgroundColor: stylesVars.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: stylesVars.border,
   },
   optionCardActive: {
-    borderColor: '#1F6BFF',
-    backgroundColor: '#1F6BFF',
+    borderColor: stylesVars.primary,
+    backgroundColor: 'rgba(59,130,246,0.12)',
   },
   optionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: stylesVars.text,
     marginBottom: 4,
   },
   optionTitleActive: {
-    color: '#ffffff',
+    color: stylesVars.text,
   },
   optionDescription: {
     fontSize: 14,
-    color: '#666',
+    color: stylesVars.textMuted,
   },
   optionDescriptionActive: {
-    color: '#E6EEFF',
+    color: stylesVars.textMuted,
   },
   summaryCard: {
-    backgroundColor: 'white',
+    backgroundColor: stylesVars.surface,
     borderRadius: 16,
     padding: 24,
     marginTop: 16,
+    borderWidth: 1,
+    borderColor: stylesVars.border,
   },
   summaryTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: stylesVars.text,
     marginBottom: 16,
   },
   summaryText: {
     fontSize: 16,
-    color: '#666',
+    color: stylesVars.textMuted,
     marginBottom: 8,
   },
   footer: {
     paddingHorizontal: 20,
     paddingVertical: Platform.OS === 'web' ? 12 : 16,
-    backgroundColor: 'white',
+    backgroundColor: stylesVars.surface,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: stylesVars.border,
   },
   nextButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1F6BFF',
+    backgroundColor: stylesVars.primary,
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderRadius: 28,
     gap: 8,
-    shadowColor: '#1F6BFF',
+    shadowColor: stylesVars.primary,
     shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 16,
     elevation: 2,
   },
   nextButtonDisabled: {
-    backgroundColor: '#BFC6D3',
+    backgroundColor: 'rgba(59,130,246,0.4)',
   },
   nextButtonText: {
     fontSize: 16,
@@ -538,36 +552,38 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   choiceButton: {
-    backgroundColor: '#F6F7FB',
+    backgroundColor: '#0F172A',
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ECEEF5',
+    borderColor: stylesVars.border,
   },
   choiceButtonActive: {
-    backgroundColor: '#1F6BFF',
-    borderColor: '#1F6BFF',
+    backgroundColor: 'rgba(59,130,246,0.15)',
+    borderColor: stylesVars.primary,
   },
   choiceText: {
     fontSize: 16,
-    color: '#1a1a1a',
+    color: stylesVars.text,
     fontWeight: '600',
   },
   choiceTextActive: {
-    color: '#ffffff',
+    color: stylesVars.text,
     fontWeight: '700',
   },
   goalInfoCard: {
-    backgroundColor: '#E6F0FF',
+    backgroundColor: 'rgba(59,130,246,0.12)',
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.25)'
   },
   goalInfoText: {
     fontSize: 16,
-    color: '#1F6BFF',
+    color: stylesVars.text,
     fontWeight: '600',
     textAlign: 'center',
   },
