@@ -50,7 +50,7 @@ export default function TrackSleepScreen() {
     }, 100);
   }, [timeMode, bedtimeHour, bedtimeMinute, bedtimePeriod, wakeupHour, wakeupMinute, wakeupPeriod]);
 
-  const handleHourScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleHourScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     const index = Math.round(offsetY / 48);
     const newHour = hours[index];
@@ -60,10 +60,11 @@ export default function TrackSleepScreen() {
       } else {
         setWakeupHour(newHour);
       }
+      hourScrollRef.current?.scrollTo({ y: index * 48, animated: true });
     }
   }, [hours, timeMode]);
 
-  const handleMinuteScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleMinuteScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     const index = Math.round(offsetY / 48);
     const newMinute = minutes[index];
@@ -73,10 +74,11 @@ export default function TrackSleepScreen() {
       } else {
         setWakeupMinute(newMinute);
       }
+      minuteScrollRef.current?.scrollTo({ y: index * 48, animated: true });
     }
   }, [minutes, timeMode]);
 
-  const handlePeriodScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handlePeriodScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     const index = Math.round(offsetY / 48);
     const newPeriod = periods[index];
@@ -86,6 +88,7 @@ export default function TrackSleepScreen() {
       } else {
         setWakeupPeriod(newPeriod);
       }
+      periodScrollRef.current?.scrollTo({ y: index * 48, animated: true });
     }
   }, [periods, timeMode]);
 
@@ -202,10 +205,9 @@ export default function TrackSleepScreen() {
                     contentContainerStyle={dynamic.wheelScrollContent}
                     showsVerticalScrollIndicator={false}
                     snapToInterval={48}
-                    decelerationRate="fast"
-                    onScroll={handleHourScroll}
-                    scrollEventThrottle={16}
-                    onMomentumScrollEnd={handleHourScroll}
+                    decelerationRate={0.98}
+                    onMomentumScrollEnd={handleHourScrollEnd}
+                    onScrollEndDrag={handleHourScrollEnd}
                     testID="hour-picker"
                   >
                     {hours.map((h) => (
@@ -223,10 +225,9 @@ export default function TrackSleepScreen() {
                     contentContainerStyle={dynamic.wheelScrollContent}
                     showsVerticalScrollIndicator={false}
                     snapToInterval={48}
-                    decelerationRate="fast"
-                    onScroll={handleMinuteScroll}
-                    scrollEventThrottle={16}
-                    onMomentumScrollEnd={handleMinuteScroll}
+                    decelerationRate={0.98}
+                    onMomentumScrollEnd={handleMinuteScrollEnd}
+                    onScrollEndDrag={handleMinuteScrollEnd}
                     testID="minute-picker"
                   >
                     {minutes.map((m) => (
@@ -243,10 +244,9 @@ export default function TrackSleepScreen() {
                     contentContainerStyle={dynamic.wheelScrollContent}
                     showsVerticalScrollIndicator={false}
                     snapToInterval={48}
-                    decelerationRate="fast"
-                    onScroll={handlePeriodScroll}
-                    scrollEventThrottle={16}
-                    onMomentumScrollEnd={handlePeriodScroll}
+                    decelerationRate={0.98}
+                    onMomentumScrollEnd={handlePeriodScrollEnd}
+                    onScrollEndDrag={handlePeriodScrollEnd}
                     testID="period-picker"
                   >
                     {periods.map((p) => (
