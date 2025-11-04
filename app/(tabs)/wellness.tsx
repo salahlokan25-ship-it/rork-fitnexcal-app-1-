@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useTheme } from '@/hooks/theme';
 import { Moon, Settings, Play, PersonStanding, Scan } from 'lucide-react-native';
@@ -11,36 +11,15 @@ import Svg, { Circle } from 'react-native-svg';
 
 export default function WellnessScreen() {
   const { theme, mode } = useTheme();
-  const { getTodaySleep, logSleep } = useSleep();
+  const { getTodaySleep } = useSleep();
   const { user } = useUser();
-  const [showSleepModal, setShowSleepModal] = useState<boolean>(false);
-  const [sleepHours, setSleepHours] = useState<string>('');
 
 
   const dynamic = stylesWithTheme(theme);
 
-  useEffect(() => {
-    const todaySleep = getTodaySleep();
-    if (todaySleep > 0) {
-      setSleepHours(todaySleep.toString());
-    }
-  }, [getTodaySleep]);
-
-  const handleSaveSleep = useCallback(async () => {
-    try {
-      const hours = parseFloat(sleepHours);
-      if (isNaN(hours) || hours < 0 || hours > 24) {
-        return;
-      }
-      await logSleep(hours);
-      setShowSleepModal(false);
-      console.log(`[Sleep] Logged ${hours} hours`);
-    } catch (e) {
-      console.log('Log sleep failed', e);
-    }
-  }, [sleepHours, logSleep]);
-
   const todaySleep = getTodaySleep();
+
+
   const sleepQuality = todaySleep > 0 ? 85 : 0;
   const currentWeight = user?.weight || 165;
   const goalWeight = (user as any)?.weightGoal || 155;
@@ -93,7 +72,7 @@ export default function WellnessScreen() {
                   <Text style={dynamic.cardSubtext}>Quality: {sleepQuality}%{sleepQuality > 0 ? ' - Good' : ''}</Text>
                   <TouchableOpacity 
                     style={dynamic.primaryButton}
-                    onPress={() => setShowSleepModal(true)}
+                    onPress={() => router.push('/track-sleep')}
                     testID="sleep-card"
                   >
                     <Text style={dynamic.primaryButtonText}>Track your sleep</Text>
@@ -174,58 +153,6 @@ export default function WellnessScreen() {
             </AnimatedFadeIn>
           </View>
         </ScrollView>
-
-        <Modal
-          visible={showSleepModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowSleepModal(false)}
-        >
-          <TouchableOpacity 
-            style={dynamic.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setShowSleepModal(false)}
-          >
-            <TouchableOpacity 
-              style={dynamic.sleepModalContent}
-              activeOpacity={1}
-              onPress={(e) => e.stopPropagation()}
-            >
-              <View style={dynamic.sleepModalHeader}>
-                <Moon size={32} color="#6366F1" />
-                <Text style={dynamic.sleepModalTitle}>Log Sleep</Text>
-              </View>
-
-              <Text style={dynamic.sleepModalLabel}>How many hours did you sleep?</Text>
-              <TextInput
-                style={dynamic.sleepInput}
-                value={sleepHours}
-                onChangeText={setSleepHours}
-                keyboardType="decimal-pad"
-                placeholder="8.0"
-                placeholderTextColor={theme.colors.textMuted}
-                testID="sleep-input"
-              />
-
-              <View style={dynamic.sleepModalButtons}>
-                <TouchableOpacity
-                  style={dynamic.sleepCancelButton}
-                  onPress={() => setShowSleepModal(false)}
-                  testID="sleep-cancel"
-                >
-                  <Text style={dynamic.sleepCancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={dynamic.sleepSaveButton}
-                  onPress={handleSaveSleep}
-                  testID="sleep-save"
-                >
-                  <Text style={dynamic.sleepSaveButtonText}>Save</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </Modal>
       </View>
     </>
   );
@@ -387,78 +314,5 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     fontWeight: '500',
     color: '#fff',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  sleepModalContent: {
-    backgroundColor: Theme.colors.surface,
-    borderRadius: 24,
-    padding: 32,
-    width: '100%',
-    maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  sleepModalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 24,
-  },
-  sleepModalTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Theme.colors.text,
-  },
-  sleepModalLabel: {
-    fontSize: 16,
-    color: Theme.colors.textMuted,
-    marginBottom: 16,
-  },
-  sleepInput: {
-    backgroundColor: Theme.colors.background,
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 18,
-    color: Theme.colors.text,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-    marginBottom: 24,
-  },
-  sleepModalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  sleepCancelButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-    alignItems: 'center',
-  },
-  sleepCancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Theme.colors.text,
-  },
-  sleepSaveButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: '#6366F1',
-    alignItems: 'center',
-  },
-  sleepSaveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
+
 });
