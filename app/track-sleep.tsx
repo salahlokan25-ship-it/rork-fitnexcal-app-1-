@@ -14,10 +14,17 @@ export default function TrackSleepScreen() {
   const { logSleep, getSleepHistory } = useSleep();
 
   const [timeMode, setTimeMode] = useState<TimeMode>('bedtime');
-  const [hour, setHour] = useState<number>(11);
-  const [minute, setMinute] = useState<number>(30);
-  const [period, setPeriod] = useState<'AM' | 'PM'>('PM');
+  const [bedtimeHour, setBedtimeHour] = useState<number>(11);
+  const [bedtimeMinute, setBedtimeMinute] = useState<number>(30);
+  const [bedtimePeriod, setBedtimePeriod] = useState<'AM' | 'PM'>('PM');
+  const [wakeupHour, setWakeupHour] = useState<number>(7);
+  const [wakeupMinute, setWakeupMinute] = useState<number>(0);
+  const [wakeupPeriod, setWakeupPeriod] = useState<'AM' | 'PM'>('AM');
   const [sleepQuality, setSleepQuality] = useState<SleepQuality>('deep');
+
+  const currentHour = timeMode === 'bedtime' ? bedtimeHour : wakeupHour;
+  const currentMinute = timeMode === 'bedtime' ? bedtimeMinute : wakeupMinute;
+  const currentPeriod = timeMode === 'bedtime' ? bedtimePeriod : wakeupPeriod;
 
   const hourScrollRef = useRef<ScrollView>(null);
   const minuteScrollRef = useRef<ScrollView>(null);
@@ -32,59 +39,86 @@ export default function TrackSleepScreen() {
   const dynamic = stylesWithTheme(theme);
 
   useEffect(() => {
-    const currentHour = new Date().getHours();
-    const currentMinute = new Date().getMinutes();
-    const isPM = currentHour >= 12;
-
-    const displayHour = currentHour % 12 || 12;
-    setHour(displayHour);
-    setMinute(currentMinute);
-    setPeriod(isPM ? 'PM' : 'AM');
-
     setTimeout(() => {
-      hourScrollRef.current?.scrollTo({ y: (displayHour - 1) * 48, animated: false });
-      minuteScrollRef.current?.scrollTo({ y: currentMinute * 48, animated: false });
-      periodScrollRef.current?.scrollTo({ y: isPM ? 48 : 0, animated: false });
+      const hour = timeMode === 'bedtime' ? bedtimeHour : wakeupHour;
+      const minute = timeMode === 'bedtime' ? bedtimeMinute : wakeupMinute;
+      const period = timeMode === 'bedtime' ? bedtimePeriod : wakeupPeriod;
+
+      hourScrollRef.current?.scrollTo({ y: (hour - 1) * 48, animated: false });
+      minuteScrollRef.current?.scrollTo({ y: minute * 48, animated: false });
+      periodScrollRef.current?.scrollTo({ y: period === 'PM' ? 48 : 0, animated: false });
     }, 100);
-  }, []);
+  }, [timeMode, bedtimeHour, bedtimeMinute, bedtimePeriod, wakeupHour, wakeupMinute, wakeupPeriod]);
 
   const handleHourScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     const index = Math.round(offsetY / 48);
     const newHour = hours[index];
     if (newHour !== undefined) {
-      setHour(newHour);
+      if (timeMode === 'bedtime') {
+        setBedtimeHour(newHour);
+      } else {
+        setWakeupHour(newHour);
+      }
     }
-  }, [hours]);
+  }, [hours, timeMode]);
 
   const handleMinuteScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     const index = Math.round(offsetY / 48);
     const newMinute = minutes[index];
     if (newMinute !== undefined) {
-      setMinute(newMinute);
+      if (timeMode === 'bedtime') {
+        setBedtimeMinute(newMinute);
+      } else {
+        setWakeupMinute(newMinute);
+      }
     }
-  }, [minutes]);
+  }, [minutes, timeMode]);
 
   const handlePeriodScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     const index = Math.round(offsetY / 48);
     const newPeriod = periods[index];
     if (newPeriod !== undefined) {
-      setPeriod(newPeriod);
+      if (timeMode === 'bedtime') {
+        setBedtimePeriod(newPeriod);
+      } else {
+        setWakeupPeriod(newPeriod);
+      }
     }
-  }, [periods]);
+  }, [periods, timeMode]);
+
+  const calculateTotalSleep = useCallback(() => {
+    const bedtime24 = bedtimePeriod === 'PM' && bedtimeHour !== 12 ? bedtimeHour + 12 : bedtimePeriod === 'AM' && bedtimeHour === 12 ? 0 : bedtimeHour;
+    const wakeup24 = wakeupPeriod === 'PM' && wakeupHour !== 12 ? wakeupHour + 12 : wakeupPeriod === 'AM' && wakeupHour === 12 ? 0 : wakeupHour;
+    
+    const bedtimeInMinutes = bedtime24 * 60 + bedtimeMinute;
+    const wakeupInMinutes = wakeup24 * 60 + wakeupMinute;
+    
+    let diffMinutes = wakeupInMinutes - bedtimeInMinutes;
+    if (diffMinutes < 0) {
+      diffMinutes += 24 * 60;
+    }
+    
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = diffMinutes % 60;
+    
+    return { hours, minutes, totalHours: diffMinutes / 60 };
+  }, [bedtimeHour, bedtimeMinute, bedtimePeriod, wakeupHour, wakeupMinute, wakeupPeriod]);
+
+  const totalSleep = useMemo(() => calculateTotalSleep(), [calculateTotalSleep]);
 
   const handleLogSleep = useCallback(async () => {
     try {
-      const sleepHours = 7.5;
-      await logSleep(sleepHours);
-      console.log(`[TrackSleep] Logged ${sleepHours} hours with quality: ${sleepQuality}`);
+      const { totalHours } = totalSleep;
+      await logSleep(totalHours);
+      console.log(`[TrackSleep] Logged ${totalHours.toFixed(1)} hours with quality: ${sleepQuality}`);
       router.back();
     } catch (error) {
       console.error('[TrackSleep] Error logging sleep:', error);
     }
-  }, [logSleep, sleepQuality]);
+  }, [logSleep, sleepQuality, totalSleep]);
 
   const maxBarHeight = useMemo(() => {
     return Math.max(...weeklyData.map(d => d.hours), 8);
@@ -176,7 +210,7 @@ export default function TrackSleepScreen() {
                   >
                     {hours.map((h) => (
                       <View key={h} style={dynamic.wheelItemWrapper}>
-                        <Text style={h === hour ? dynamic.wheelItemActive : dynamic.wheelItemInactive}>
+                        <Text style={h === currentHour ? dynamic.wheelItemActive : dynamic.wheelItemInactive}>
                           {h}
                         </Text>
                       </View>
@@ -197,7 +231,7 @@ export default function TrackSleepScreen() {
                   >
                     {minutes.map((m) => (
                       <View key={m} style={dynamic.wheelItemWrapper}>
-                        <Text style={m === minute ? dynamic.wheelItemActive : dynamic.wheelItemInactive}>
+                        <Text style={m === currentMinute ? dynamic.wheelItemActive : dynamic.wheelItemInactive}>
                           {m.toString().padStart(2, '0')}
                         </Text>
                       </View>
@@ -217,7 +251,7 @@ export default function TrackSleepScreen() {
                   >
                     {periods.map((p) => (
                       <View key={p} style={dynamic.wheelItemWrapper}>
-                        <Text style={p === period ? dynamic.wheelItemActive : dynamic.wheelItemInactive}>
+                        <Text style={p === currentPeriod ? dynamic.wheelItemActive : dynamic.wheelItemInactive}>
                           {p}
                         </Text>
                       </View>
@@ -230,7 +264,7 @@ export default function TrackSleepScreen() {
             <AnimatedFadeIn delay={100}>
               <View style={dynamic.totalSleepCard}>
                 <Text style={dynamic.totalSleepLabel}>Total Sleep</Text>
-                <Text style={dynamic.totalSleepValue}>7h 30m</Text>
+                <Text style={dynamic.totalSleepValue}>{totalSleep.hours}h {totalSleep.minutes}m</Text>
               </View>
             </AnimatedFadeIn>
 
