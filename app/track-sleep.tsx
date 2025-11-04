@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useTheme } from '@/hooks/theme';
-import { ArrowLeft, Calendar, Home, PieChart, Moon as MoonIcon, User, Lightbulb } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Lightbulb } from 'lucide-react-native';
 import { useSleep } from '@/hooks/sleep-store';
 import AnimatedFadeIn from '@/components/AnimatedFadeIn';
 
@@ -19,6 +19,14 @@ export default function TrackSleepScreen() {
   const [period, setPeriod] = useState<'AM' | 'PM'>('PM');
   const [sleepQuality, setSleepQuality] = useState<SleepQuality>('deep');
 
+  const hourScrollRef = useRef<ScrollView>(null);
+  const minuteScrollRef = useRef<ScrollView>(null);
+  const periodScrollRef = useRef<ScrollView>(null);
+
+  const hours = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), []);
+  const minutes = useMemo(() => Array.from({ length: 60 }, (_, i) => i), []);
+  const periods = useMemo(() => ['AM', 'PM'] as const, []);
+
   const weeklyData = getSleepHistory(7);
 
   const dynamic = stylesWithTheme(theme);
@@ -28,10 +36,44 @@ export default function TrackSleepScreen() {
     const currentMinute = new Date().getMinutes();
     const isPM = currentHour >= 12;
 
-    setHour(currentHour % 12 || 12);
+    const displayHour = currentHour % 12 || 12;
+    setHour(displayHour);
     setMinute(currentMinute);
     setPeriod(isPM ? 'PM' : 'AM');
+
+    setTimeout(() => {
+      hourScrollRef.current?.scrollTo({ y: (displayHour - 1) * 48, animated: false });
+      minuteScrollRef.current?.scrollTo({ y: currentMinute * 48, animated: false });
+      periodScrollRef.current?.scrollTo({ y: isPM ? 48 : 0, animated: false });
+    }, 100);
   }, []);
+
+  const handleHourScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const index = Math.round(offsetY / 48);
+    const newHour = hours[index];
+    if (newHour !== undefined && newHour !== hour) {
+      setHour(newHour);
+    }
+  }, [hour, hours]);
+
+  const handleMinuteScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const index = Math.round(offsetY / 48);
+    const newMinute = minutes[index];
+    if (newMinute !== undefined && newMinute !== minute) {
+      setMinute(newMinute);
+    }
+  }, [minute, minutes]);
+
+  const handlePeriodScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const index = Math.round(offsetY / 48);
+    const newPeriod = periods[index];
+    if (newPeriod !== undefined && newPeriod !== period) {
+      setPeriod(newPeriod);
+    }
+  }, [period, periods]);
 
   const handleLogSleep = useCallback(async () => {
     try {
@@ -120,22 +162,61 @@ export default function TrackSleepScreen() {
               <View style={dynamic.wheelPickerContainer}>
                 <View style={dynamic.wheelPickerOverlay} />
                 <View style={dynamic.wheelPicker}>
-                  <View style={dynamic.wheelColumn}>
-                    <Text style={dynamic.wheelItemInactive}>{hour === 1 ? 12 : hour - 1}</Text>
-                    <Text style={dynamic.wheelItemActive}>{hour}</Text>
-                    <Text style={dynamic.wheelItemInactive}>{hour === 12 ? 1 : hour + 1}</Text>
-                  </View>
+                  <ScrollView
+                    ref={hourScrollRef}
+                    style={dynamic.wheelScrollView}
+                    contentContainerStyle={dynamic.wheelScrollContent}
+                    showsVerticalScrollIndicator={false}
+                    snapToInterval={48}
+                    decelerationRate="fast"
+                    onMomentumScrollEnd={handleHourScroll}
+                    testID="hour-picker"
+                  >
+                    {hours.map((h) => (
+                      <View key={h} style={dynamic.wheelItemWrapper}>
+                        <Text style={h === hour ? dynamic.wheelItemActive : dynamic.wheelItemInactive}>
+                          {h}
+                        </Text>
+                      </View>
+                    ))}
+                  </ScrollView>
                   <Text style={dynamic.wheelColon}>:</Text>
-                  <View style={dynamic.wheelColumn}>
-                    <Text style={dynamic.wheelItemInactive}>{minute === 0 ? 59 : minute - 1}</Text>
-                    <Text style={dynamic.wheelItemActive}>{minute.toString().padStart(2, '0')}</Text>
-                    <Text style={dynamic.wheelItemInactive}>{minute === 59 ? 0 : minute + 1}</Text>
-                  </View>
-                  <View style={dynamic.wheelColumn}>
-                    <Text style={dynamic.wheelItemInactive}>{period === 'AM' ? 'PM' : 'AM'}</Text>
-                    <Text style={dynamic.wheelItemActive}>{period}</Text>
-                    <Text style={dynamic.wheelItemInactive}>{period === 'PM' ? 'AM' : 'PM'}</Text>
-                  </View>
+                  <ScrollView
+                    ref={minuteScrollRef}
+                    style={dynamic.wheelScrollView}
+                    contentContainerStyle={dynamic.wheelScrollContent}
+                    showsVerticalScrollIndicator={false}
+                    snapToInterval={48}
+                    decelerationRate="fast"
+                    onMomentumScrollEnd={handleMinuteScroll}
+                    testID="minute-picker"
+                  >
+                    {minutes.map((m) => (
+                      <View key={m} style={dynamic.wheelItemWrapper}>
+                        <Text style={m === minute ? dynamic.wheelItemActive : dynamic.wheelItemInactive}>
+                          {m.toString().padStart(2, '0')}
+                        </Text>
+                      </View>
+                    ))}
+                  </ScrollView>
+                  <ScrollView
+                    ref={periodScrollRef}
+                    style={dynamic.wheelScrollView}
+                    contentContainerStyle={dynamic.wheelScrollContent}
+                    showsVerticalScrollIndicator={false}
+                    snapToInterval={48}
+                    decelerationRate="fast"
+                    onMomentumScrollEnd={handlePeriodScroll}
+                    testID="period-picker"
+                  >
+                    {periods.map((p) => (
+                      <View key={p} style={dynamic.wheelItemWrapper}>
+                        <Text style={p === period ? dynamic.wheelItemActive : dynamic.wheelItemInactive}>
+                          {p}
+                        </Text>
+                      </View>
+                    ))}
+                  </ScrollView>
                 </View>
               </View>
             </AnimatedFadeIn>
@@ -234,40 +315,6 @@ export default function TrackSleepScreen() {
             </AnimatedFadeIn>
           </View>
         </ScrollView>
-
-        <View style={dynamic.bottomNav}>
-          <TouchableOpacity 
-            style={dynamic.navButton}
-            onPress={() => router.push('/(tabs)/home')}
-            testID="nav-home"
-          >
-            <Home size={24} color={theme.colors.textMuted} />
-            <Text style={dynamic.navButtonText}>Home</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={dynamic.navButton}
-            onPress={() => {}}
-            testID="nav-reports"
-          >
-            <PieChart size={24} color={theme.colors.textMuted} />
-            <Text style={dynamic.navButtonText}>Reports</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={dynamic.navButtonActive}
-            testID="nav-sleep"
-          >
-            <MoonIcon size={24} color="#4A90E2" />
-            <Text style={dynamic.navButtonTextActive}>Sleep</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={dynamic.navButton}
-            onPress={() => router.push('/(tabs)/settings')}
-            testID="nav-profile"
-          >
-            <User size={24} color={theme.colors.textMuted} />
-            <Text style={dynamic.navButtonText}>Profile</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </>
   );
@@ -283,7 +330,7 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   segmentedControl: {
     flexDirection: 'row',
@@ -338,8 +385,16 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 16,
   },
-  wheelColumn: {
+  wheelScrollView: {
     flex: 1,
+    height: 144,
+  },
+  wheelScrollContent: {
+    paddingVertical: 48,
+  },
+  wheelItemWrapper: {
+    height: 48,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   wheelColon: {
@@ -506,40 +561,5 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: Theme.colors.text,
-  },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: Theme.colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: Theme.colors.border,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    height: 80,
-  },
-  navButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  navButtonActive: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  navButtonText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: Theme.colors.textMuted,
-  },
-  navButtonTextActive: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#4A90E2',
   },
 });
