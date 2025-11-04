@@ -1,46 +1,41 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView } from 'react-native';
-import { Stack } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { Stack, router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, ImagePlus, Sparkles, Clock, SlidersHorizontal } from 'lucide-react-native';
+import { ArrowLeft, Camera, ImagePlus } from 'lucide-react-native';
+import Slider from '@react-native-community/slider';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { generateFutureBodyVisualization } from '@/services/future-visualizer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
- type Scenario = 'current' | 'reduce_15' | 'increase_protein';
- type Horizon = '2w' | '1m' | '3m';
+type BodyToggle = 'current' | 'future';
 
 export default function FutureVisualizerScreen() {
   const insets = useSafeAreaInsets();
-  const [scenario, setScenario] = useState<Scenario>('current');
-  const [horizon, setHorizon] = useState<Horizon>('2w');
-  const [sourceImage, setSourceImage] = useState<{ uri: string; base64: string } | null>(null);
-  const [resultImage, setResultImage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [errorText, setErrorText] = useState<string>('');
+  const [bodyToggle, setBodyToggle] = useState<BodyToggle>('future');
+  const [targetWeight, setTargetWeight] = useState<number>(75);
+  const [bodyFat, setBodyFat] = useState<number>(15);
+  const [calories, setCalories] = useState<number>(-15);
+  const [protein, setProtein] = useState<number>(10);
+  const [sourceImage, setSourceImage] = useState<{ uri: string } | null>(null);
 
   const pickFromLibrary = useCallback(async () => {
-    setErrorText('');
     try {
       const res = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 1,
-        base64: true,
         allowsEditing: true,
         aspect: [3, 4],
       });
-      if (!res.canceled && res.assets && res.assets[0]?.uri && res.assets[0]?.base64) {
-        setSourceImage({ uri: res.assets[0].uri, base64: res.assets[0].base64 });
-        setResultImage(null);
+      if (!res.canceled && res.assets && res.assets[0]?.uri) {
+        setSourceImage({ uri: res.assets[0].uri });
       }
     } catch (e) {
       console.error('[FutureVisualizer] pickFromLibrary error', e);
-      setErrorText('Could not open library. Please try again.');
+      Alert.alert('Error', 'Could not open library. Please try again.');
     }
   }, []);
 
   const takePhoto = useCallback(async () => {
-    setErrorText('');
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
@@ -49,259 +44,481 @@ export default function FutureVisualizerScreen() {
       }
       const res = await ImagePicker.launchCameraAsync({
         quality: 1,
-        base64: true,
         allowsEditing: true,
         aspect: [3, 4],
       });
-      if (!res.canceled && res.assets && res.assets[0]?.uri && res.assets[0]?.base64) {
-        setSourceImage({ uri: res.assets[0].uri, base64: res.assets[0].base64 });
-        setResultImage(null);
+      if (!res.canceled && res.assets && res.assets[0]?.uri) {
+        setSourceImage({ uri: res.assets[0].uri });
       }
     } catch (e) {
       console.error('[FutureVisualizer] takePhoto error', e);
-      setErrorText('Could not take photo. Please try again.');
+      Alert.alert('Error', 'Could not take photo. Please try again.');
     }
   }, []);
 
-  const canGenerate = useMemo(() => !!sourceImage && !isLoading, [sourceImage, isLoading]);
-
-  const onGenerate = useCallback(async () => {
-    if (!sourceImage) return;
-    setIsLoading(true);
-    setErrorText('');
-    try {
-      const result = await generateFutureBodyVisualization({
-        scenario,
-        horizon,
-        imageBase64: sourceImage.base64,
-      });
-      setResultImage(`data:image/png;base64,${result.imageBase64}`);
-    } catch (e) {
-      console.error('[FutureVisualizer] generate error', e);
-      const msg = e instanceof Error ? e.message : 'Generation failed. Try a clear, full-body photo on a neutral background.';
-      setErrorText(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [horizon, scenario, sourceImage]);
+  const handleSetGoal = useCallback(() => {
+    Alert.alert('Goal Set', 'Your fitness goal has been set successfully!');
+  }, []);
 
   return (
     <ErrorBoundary>
       <View style={styles.screen} testID="future-visualizer-screen">
-        <Stack.Screen options={{ title: 'Future Body Visualizer' }} />
-        <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 16 + insets.bottom }] } showsVerticalScrollIndicator={false}>
-          <View style={styles.hero}>
-            <View style={styles.heroIconWrap}>
-              <Sparkles color="#1f7aec" size={24} />
-            </View>
-            <Text style={styles.heroTitle}>See your visual future self</Text>
-            <Text style={styles.heroSubtitle}>Predict 2w • 1m • 3m based on your habits</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Your photo</Text>
-            <Text style={styles.cardSubtitle}>Use a clear, full-body photo on a neutral background</Text>
-            <View style={styles.photoRow}>
-              <TouchableOpacity onPress={takePhoto} style={styles.actionBtn} testID="take-photo-btn">
-                <Camera color="#0b63ff" size={20} />
-                <Text style={styles.actionText}>Take photo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={pickFromLibrary} style={styles.actionBtn} testID="pick-photo-btn">
-                <ImagePlus color="#0b63ff" size={20} />
-                <Text style={styles.actionText}>Upload</Text>
-              </TouchableOpacity>
-            </View>
-            {sourceImage?.uri ? (
-              <Image source={{ uri: sourceImage.uri }} style={styles.preview} resizeMode="cover" />
-            ) : (
-              <View style={styles.previewPlaceholder}>
-                <Text style={styles.previewText}>No photo selected</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Scenario</Text>
-            <View style={styles.segment}>
-              {(
-                [
-                  { key: 'current', label: 'Current' },
-                  { key: 'reduce_15', label: '-15% kcal' },
-                  { key: 'increase_protein', label: '+Protein' },
-                ] as { key: Scenario; label: string }[]
-              ).map((opt) => {
-                const selected = scenario === opt.key;
-                return (
-                  <TouchableOpacity
-                    key={opt.key}
-                    onPress={() => setScenario(opt.key)}
-                    style={[styles.segmentItem, selected ? styles.segmentItemActive : undefined]}
-                    testID={`scenario-${opt.key}`}
-                  >
-                    <Text style={[styles.segmentText, selected ? styles.segmentTextActive : undefined]}>
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <View style={styles.horizonRow}>
-              <Clock color="#4b5563" size={18} />
-              {(['2w', '1m', '3m'] as Horizon[]).map((h) => {
-                const selected = horizon === h;
-                return (
-                  <TouchableOpacity
-                    key={h}
-                    onPress={() => setHorizon(h)}
-                    style={[styles.horizonChip, selected ? styles.horizonChipActive : undefined]}
-                    testID={`horizon-${h}`}
-                  >
-                    <Text style={[styles.horizonText, selected ? styles.horizonTextActive : undefined]}>
-                      {h}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-              <SlidersHorizontal color="#4b5563" size={18} />
-            </View>
-          </View>
-
-          <TouchableOpacity
-            onPress={onGenerate}
-            disabled={!canGenerate}
-            style={[styles.generateBtn, !canGenerate ? styles.generateBtnDisabled : undefined]}
-            testID="generate-btn"
+        <Stack.Screen options={{ headerShown: false }} />
+        
+        <View style={[styles.header, { paddingTop: insets.top }]}>
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            style={styles.backButton}
+            testID="back-button"
           >
-            {isLoading ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.generateText}>Generate</Text>
-            )}
+            <ArrowLeft color="#71717a" size={24} />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Future Body Visualizer</Text>
+          <View style={styles.headerSpacer} />
+        </View>
 
-          {errorText ? (
-            <Text style={styles.errorText} testID="error-text">{errorText}</Text>
-          ) : null}
-
-          {resultImage ? (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Prediction</Text>
-              <Image source={{ uri: resultImage }} style={styles.result} resizeMode="cover" />
-              <Text style={styles.resultCaption}>AI visualization. For motivation only, not medical advice.</Text>
+        <ScrollView 
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 220 + insets.bottom }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.toggleContainer}>
+            <View style={styles.toggleWrapper}>
+              <TouchableOpacity
+                onPress={() => setBodyToggle('current')}
+                style={[
+                  styles.toggleButton,
+                  bodyToggle === 'current' && styles.toggleButtonActive
+                ]}
+                testID="current-body-toggle"
+              >
+                <Text style={[
+                  styles.toggleText,
+                  bodyToggle === 'current' && styles.toggleTextActive
+                ]}>
+                  Current Body
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setBodyToggle('future')}
+                style={[
+                  styles.toggleButton,
+                  bodyToggle === 'future' && styles.toggleButtonActive
+                ]}
+                testID="future-body-toggle"
+              >
+                <Text style={[
+                  styles.toggleText,
+                  bodyToggle === 'future' && styles.toggleTextActive
+                ]}>
+                  Future Body
+                </Text>
+              </TouchableOpacity>
             </View>
-          ) : null}
+          </View>
 
-          <View style={styles.footerSpacer} />
+          <View style={styles.bodyImageContainer}>
+            <View style={styles.bodyImageWrapper}>
+              {sourceImage ? (
+                <Image 
+                  source={{ uri: sourceImage.uri }} 
+                  style={styles.bodyImage} 
+                  resizeMode="contain"
+                />
+              ) : (
+                <Image
+                  source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBX-BZPEeMnjmEv4auoygb7lYAJaZINLyRTdoLHTrrq2IAcpxPfecu5sMNNmyHkPN7gMenbHDGtlqwJAT5TnptDT1O3rgT9X7MPphHO84ibXKj574NvWAdFriPLfZDmfVCVm0IJX_yBTgKuEyqLhQ1PhDIdnaDZJy12gskW3hBnulTERBZitmYB5Yy5o6MFYhCidRT9aj9nOjD5hO2ybyacld5Ldumfu4cTlz6gqPQsrs9aMThfMMEU2QSWjMoQhFqWzexCwpaffkQu' }}
+                  style={styles.bodyImage}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          </View>
+
+          <View style={styles.contentPadding}>
+            <Text style={styles.instructionText}>
+              Adjust the sliders below to see your potential transformation.
+            </Text>
+
+            <View style={styles.photoButtonsRow}>
+              <TouchableOpacity 
+                onPress={takePhoto} 
+                style={styles.photoButton}
+                testID="take-photo-btn"
+              >
+                <Camera color="#ffffff" size={20} />
+                <Text style={styles.photoButtonText}>Take Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={pickFromLibrary} 
+                style={styles.photoButton}
+                testID="choose-photo-btn"
+              >
+                <ImagePlus color="#ffffff" size={20} />
+                <Text style={styles.photoButtonText}>Choose Photo</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Text style={styles.sectionTitle}>Set Your Goal</Text>
+
+          <View style={styles.selectorsRow}>
+            <View style={styles.selectContainer}>
+              <Text style={styles.selectLabel}>Goal Type</Text>
+              <View style={styles.selectWrapper}>
+                <Text style={styles.selectValue}>Lose Weight</Text>
+              </View>
+            </View>
+            <View style={styles.selectContainer}>
+              <Text style={styles.selectLabel}>Timeline</Text>
+              <View style={styles.selectWrapper}>
+                <Text style={styles.selectValue}>In 3 Months</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.slidersContainer}>
+            <View style={styles.sliderGroup}>
+              <View style={styles.sliderHeader}>
+                <Text style={styles.sliderLabel}>Target Weight</Text>
+                <Text style={styles.sliderValue}>{targetWeight} kg</Text>
+              </View>
+              <Slider
+                style={styles.slider}
+                minimumValue={50}
+                maximumValue={100}
+                value={targetWeight}
+                onValueChange={setTargetWeight}
+                minimumTrackTintColor="#137fec"
+                maximumTrackTintColor="#3f3f46"
+                thumbTintColor="#137fec"
+                testID="target-weight-slider"
+              />
+            </View>
+
+            <View style={styles.sliderGroup}>
+              <View style={styles.sliderHeader}>
+                <Text style={styles.sliderLabel}>Body Fat %</Text>
+                <Text style={styles.sliderValue}>{bodyFat} %</Text>
+              </View>
+              <Slider
+                style={styles.slider}
+                minimumValue={5}
+                maximumValue={40}
+                value={bodyFat}
+                onValueChange={setBodyFat}
+                minimumTrackTintColor="#137fec"
+                maximumTrackTintColor="#3f3f46"
+                thumbTintColor="#137fec"
+                testID="body-fat-slider"
+              />
+            </View>
+
+            <View style={styles.sliderGroup}>
+              <View style={styles.sliderHeader}>
+                <Text style={styles.sliderLabel}>Calories</Text>
+                <Text style={styles.sliderValue}>{calories > 0 ? '+' : ''}{calories}%</Text>
+              </View>
+              <Slider
+                style={styles.slider}
+                minimumValue={-25}
+                maximumValue={25}
+                value={calories}
+                onValueChange={setCalories}
+                minimumTrackTintColor="#137fec"
+                maximumTrackTintColor="#3f3f46"
+                thumbTintColor="#137fec"
+                testID="calories-slider"
+              />
+            </View>
+
+            <View style={styles.sliderGroup}>
+              <View style={styles.sliderHeader}>
+                <Text style={styles.sliderLabel}>Protein</Text>
+                <Text style={styles.sliderValue}>{protein > 0 ? '+' : ''}{protein}%</Text>
+              </View>
+              <Slider
+                style={styles.slider}
+                minimumValue={-25}
+                maximumValue={25}
+                value={protein}
+                onValueChange={setProtein}
+                minimumTrackTintColor="#137fec"
+                maximumTrackTintColor="#3f3f46"
+                thumbTintColor="#137fec"
+                testID="protein-slider"
+              />
+            </View>
+          </View>
+
+          <Text style={styles.disclaimerText}>
+            This visualization is an AI-powered estimation for motivational purposes only. Actual results may vary.
+          </Text>
         </ScrollView>
+
+        <View style={[styles.bottomContainer, { paddingBottom: insets.bottom }]}>
+          <View style={styles.projectionCard}>
+            <View style={styles.projectionLeft}>
+              <Text style={styles.projectionTitle}>Your Projection</Text>
+              <Text style={styles.projectionDate}>Est. Aug 2024</Text>
+            </View>
+            <View style={styles.projectionRight}>
+              <Text style={styles.projectionWeight}>{targetWeight.toFixed(1)} kg</Text>
+              <Text style={styles.projectionChange}>-{(85 - targetWeight).toFixed(0)} kg</Text>
+            </View>
+            <View style={styles.projectionRight}>
+              <Text style={styles.projectionWeight}>{bodyFat.toFixed(1)} %</Text>
+              <Text style={styles.projectionChange}>-{(20 - bodyFat).toFixed(0)} %</Text>
+            </View>
+          </View>
+          <TouchableOpacity 
+            onPress={handleSetGoal} 
+            style={styles.setGoalButton}
+            testID="set-goal-btn"
+          >
+            <Text style={styles.setGoalText}>Set This as My Goal</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ErrorBoundary>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0a0f1a' },
-  container: { padding: 16 },
-  hero: {
-    backgroundColor: '#0d1424',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+  screen: {
+    flex: 1,
+    backgroundColor: '#101922',
   },
-  heroIconWrap: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: '#101922',
+  },
+  backButton: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(31,122,236,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  scrollContent: {
+    paddingBottom: 240,
+  },
+  toggleContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  toggleWrapper: {
+    flexDirection: 'row',
+    height: 48,
+    backgroundColor: '#1C2632',
+    borderRadius: 12,
+    padding: 6,
+  },
+  toggleButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  toggleButtonActive: {
+    backgroundColor: '#101922',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#71717a',
+  },
+  toggleTextActive: {
+    color: '#ffffff',
+  },
+  bodyImageContainer: {
+    width: '100%',
+    aspectRatio: 2 / 3,
+    paddingVertical: 12,
+  },
+  bodyImageWrapper: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  bodyImage: {
+    width: '100%',
+    height: '100%',
+  },
+  contentPadding: {
+    paddingHorizontal: 16,
+  },
+  instructionText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#71717a',
+    marginBottom: 16,
+  },
+  photoButtonsRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  photoButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    backgroundColor: '#1C2632',
+    borderRadius: 8,
+  },
+  photoButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#ffffff',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  selectorsRow: {
+    flexDirection: 'row',
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  selectContainer: {
+    flex: 1,
+  },
+  selectLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#ffffff',
     marginBottom: 8,
   },
-  heroTitle: { color: 'white', fontSize: 20, fontWeight: '800', marginBottom: 4 },
-  heroSubtitle: { color: '#c7d2fe', fontSize: 13 },
-
-  card: {
-    marginTop: 16,
-    backgroundColor: '#0d1424',
-    borderRadius: 16,
-    padding: 14,
+  selectWrapper: {
+    height: 56,
+    backgroundColor: '#27303d',
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: '#3f3f46',
+    justifyContent: 'center',
+    paddingHorizontal: 15,
   },
-  cardTitle: { color: 'white', fontSize: 16, fontWeight: '700', marginBottom: 6 },
-  cardSubtitle: { color: '#94a3b8', fontSize: 12, marginBottom: 10 },
-
-  photoRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  actionBtn: {
+  selectValue: {
+    fontSize: 16,
+    color: '#ffffff',
+  },
+  slidersContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 24,
+  },
+  sliderGroup: {
+    width: '100%',
+  },
+  sliderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sliderLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#ffffff',
+  },
+  sliderValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#137fec',
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  disclaimerText: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    fontSize: 12,
+    textAlign: 'center',
+    color: '#52525b',
+  },
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    backgroundColor: '#101922',
+    borderTopWidth: 1,
+    borderTopColor: '#27303d',
+  },
+  projectionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(11,99,255,0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    justifyContent: 'space-between',
+    backgroundColor: '#27303d',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(11,99,255,0.35)',
+    padding: 16,
+    marginBottom: 16,
   },
-  actionText: { color: '#bcd7ff', fontWeight: '700' as const },
-
-  preview: { width: '100%', height: 260, borderRadius: 12 },
-  previewPlaceholder: {
+  projectionLeft: {
+    flex: 1,
+  },
+  projectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 2,
+  },
+  projectionDate: {
+    fontSize: 14,
+    color: '#71717a',
+  },
+  projectionRight: {
+    alignItems: 'flex-end',
+    marginLeft: 16,
+  },
+  projectionWeight: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 2,
+  },
+  projectionChange: {
+    fontSize: 14,
+    color: '#22c55e',
+  },
+  setGoalButton: {
     width: '100%',
-    height: 120,
+    height: 56,
+    backgroundColor: '#137fec',
     borderRadius: 12,
-    backgroundColor: '#111827',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 16,
   },
-  previewText: { color: '#6b7280' },
-
-  segment: {
-    flexDirection: 'row',
-    backgroundColor: '#0a1020',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    padding: 4,
-    gap: 6,
+  setGoalText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
   },
-  segmentItem: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  segmentItemActive: { backgroundColor: 'rgba(11,99,255,0.18)' },
-  segmentText: { color: '#93a0b4', fontWeight: '700' as const },
-  segmentTextActive: { color: '#e5f0ff' },
-
-  horizonRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
-  horizonChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.25)',
-    backgroundColor: 'transparent',
-  },
-  horizonChipActive: { backgroundColor: 'rgba(11,99,255,0.18)', borderColor: 'rgba(11,99,255,0.45)' },
-  horizonText: { color: '#a1a1aa', fontWeight: '700' as const },
-  horizonTextActive: { color: '#e5f0ff' },
-
-  generateBtn: {
-    marginTop: 16,
-    backgroundColor: '#2563eb',
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  generateBtnDisabled: { opacity: 0.5 },
-  generateText: { color: 'white', fontSize: 16, fontWeight: '800' as const },
-  errorText: { color: '#fca5a5', marginTop: 10 },
-
-  result: { width: '100%', height: 320, borderRadius: 12, marginTop: 8 },
-  resultCaption: { color: '#8da2c2', fontSize: 12, marginTop: 8 },
-  footerSpacer: { height: 40 },
 });
