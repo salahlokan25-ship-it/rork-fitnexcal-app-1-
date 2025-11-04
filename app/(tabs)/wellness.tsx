@@ -130,16 +130,16 @@ export default function WellnessScreen() {
             </AnimatedFadeIn>
 
             <AnimatedFadeIn delay={100}>
-              <TouchableOpacity 
-                style={dynamic.metCard}
-                onPress={() => router.push('/log-exercise')}
-                testID="met-card"
-              >
+              <View style={dynamic.metCard}>
                 <View style={dynamic.metContent}>
                   <Text style={dynamic.cardLabel}>MET Calculator</Text>
                   <Text style={dynamic.cardValue}>0 Mins</Text>
                   <Text style={dynamic.cardSubtext}>Streak: 0 days</Text>
-                  <TouchableOpacity style={dynamic.secondaryButton}>
+                  <TouchableOpacity 
+                    style={dynamic.secondaryButton}
+                    onPress={() => router.push('/log-exercise')}
+                    testID="met-card"
+                  >
                     <Play size={16} color="#fff" fill="#fff" />
                     <Text style={dynamic.secondaryButtonText}>Start a Session</Text>
                   </TouchableOpacity>
@@ -147,15 +147,11 @@ export default function WellnessScreen() {
                 <View style={dynamic.metIcon}>
                   <PersonStanding size={48} color="#50E3C2" />
                 </View>
-              </TouchableOpacity>
+              </View>
             </AnimatedFadeIn>
 
             <AnimatedFadeIn delay={150}>
-              <TouchableOpacity 
-                style={dynamic.vizCard}
-                onPress={() => router.push('/future-visualizer')}
-                testID="future-visualizer-card"
-              >
+              <View style={dynamic.vizCard}>
                 <View style={dynamic.vizContent}>
                   <Text style={dynamic.cardLabel}>Body Goals</Text>
                   <Text style={dynamic.cardValue}>Future You</Text>
@@ -163,14 +159,18 @@ export default function WellnessScreen() {
                     <Text style={dynamic.cardSubtext}>Current: {currentWeight} lbs</Text>
                     <Text style={dynamic.cardSubtext}>Goal: {goalWeight} lbs</Text>
                   </View>
-                  <TouchableOpacity style={dynamic.tertiaryButton}>
+                  <TouchableOpacity 
+                    style={dynamic.tertiaryButton}
+                    onPress={() => router.push('/future-visualizer')}
+                    testID="future-visualizer-card"
+                  >
                     <Text style={dynamic.tertiaryButtonText}>See My Visualization</Text>
                   </TouchableOpacity>
                 </View>
                 <View style={dynamic.vizImage}>
                   <Scan size={48} color="#4A90E2" />
                 </View>
-              </TouchableOpacity>
+              </View>
             </AnimatedFadeIn>
           </View>
         </ScrollView>
