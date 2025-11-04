@@ -6,6 +6,18 @@ import { useTheme } from '@/hooks/theme';
 import { ArrowLeft, X, Play, VolumeX, Volume2 } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 
+// Web audio fallback type
+// DOM types exist on web; on native they'll be erased by Platform check
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type WebAudio = {
+  el: HTMLAudioElement;
+  play: () => Promise<void>;
+  pause: () => void;
+  unload: () => void;
+  setVolume: (v: number) => void;
+  isPlaying: () => boolean;
+};
+
 type AudioChoice = 'Peaceful Piano' | 'Forest Rain' | 'Ocean Waves' | 'Meditation Ambient';
 
 const AUDIO_TRACKS: Record<AudioChoice, string> = {
@@ -41,12 +53,54 @@ export default function MindfulEatingScreen() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const soundRef = useRef<any>(null);
 
+  const isWeb = Platform.OS === 'web';
+
   const progress = Math.max(0, Math.min(1, (totalSeconds - remaining) / totalSeconds));
   const circumference = 2 * Math.PI * 54;
   const strokeDashoffset = circumference * (1 - progress);
 
+  const createWebAudio = useCallback((uri: string): WebAudio => {
+    const el = new Audio(uri);
+    el.loop = true;
+    el.preload = 'auto';
+    el.crossOrigin = 'anonymous';
+    const api: WebAudio = {
+      el,
+      async play() {
+        console.log('[MindfulEating][web] trying to play');
+        await el.play();
+      },
+      pause() {
+        console.log('[MindfulEating][web] pause');
+        el.pause();
+      },
+      unload() {
+        console.log('[MindfulEating][web] unload');
+        el.pause();
+        el.src = '';
+      },
+      setVolume(v: number) {
+        el.volume = Math.max(0, Math.min(1, v));
+      },
+      isPlaying() {
+        return !!(!el.paused && !el.ended && el.currentTime > 0);
+      },
+    };
+    return api;
+  }, []);
+
   const ensureSoundLoaded = useCallback(async () => {
     try {
+      const uri = AUDIO_TRACKS[audioChoice];
+      if (isWeb) {
+        if (soundRef.current?.el) return soundRef.current as WebAudio;
+        const wa = createWebAudio(uri);
+        wa.setVolume(volume);
+        soundRef.current = wa;
+        console.log('[MindfulEating] web audio created', uri);
+        return wa;
+      }
+
       const { Audio } = await import('expo-av');
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
@@ -56,36 +110,48 @@ export default function MindfulEatingScreen() {
         playThroughEarpieceAndroid: false,
       });
 
-      if (soundRef.current) {
-        return soundRef.current;
-      }
+      if (soundRef.current?.playAsync) return soundRef.current;
 
-      const uri = AUDIO_TRACKS[audioChoice];
       const created = await Audio.Sound.createAsync(
         { uri },
         { isLooping: true, volume }
       );
       const sound = created.sound;
       soundRef.current = sound;
+      console.log('[MindfulEating] native sound created', uri);
       return sound;
     } catch (e) {
       console.log('[MindfulEating] audio load error', e);
       return null;
     }
-  }, [audioChoice, volume]);
+  }, [audioChoice, volume, isWeb, createWebAudio]);
 
   const reloadTrack = useCallback(async () => {
     try {
-      if (soundRef.current?.unloadAsync) {
-        await soundRef.current.unloadAsync();
+      if (soundRef.current) {
+        if (isWeb && soundRef.current.unload) {
+          soundRef.current.unload();
+        } else if (soundRef.current?.unloadAsync) {
+          await soundRef.current.unloadAsync();
+        }
         soundRef.current = null;
       }
       const snd = await ensureSoundLoaded();
-      if (snd) {
-        await snd.setVolumeAsync(volume);
+      if (!snd) return;
+      if (isWeb) {
+        (snd as WebAudio).setVolume(volume);
         if (running) {
           try {
-            await snd.playAsync();
+            await (snd as WebAudio).play();
+          } catch (e) {
+            console.log('[MindfulEating] web reload play blocked', e);
+          }
+        }
+      } else {
+        await snd.setVolumeAsync?.(volume);
+        if (running) {
+          try {
+            await snd.playAsync?.();
           } catch (e) {
             console.log('[MindfulEating] reload play blocked', e);
           }
@@ -94,38 +160,57 @@ export default function MindfulEatingScreen() {
     } catch (e) {
       console.log('[MindfulEating] reload error', e);
     }
-  }, [ensureSoundLoaded, running, volume, audioChoice]);
+  }, [ensureSoundLoaded, running, volume, isWeb]);
 
   const startMusicIfNeeded = useCallback(async () => {
     const snd = await ensureSoundLoaded();
     if (!snd) return;
     try {
-      await snd.setVolumeAsync(volume);
-      const status: any = await snd.getStatusAsync();
-      if (!status?.isPlaying) {
-        await snd.playAsync();
+      if (isWeb) {
+        (snd as WebAudio).setVolume(volume);
+        if (!(snd as WebAudio).isPlaying()) {
+          await (snd as WebAudio).play();
+        }
+      } else {
+        await snd.setVolumeAsync?.(volume);
+        const status: any = await snd.getStatusAsync?.();
+        if (!status?.isPlaying) {
+          await snd.playAsync?.();
+        }
       }
     } catch (e) {
       console.log('[MindfulEating] play error', e);
     }
-  }, [ensureSoundLoaded, audioChoice, volume]);
+  }, [ensureSoundLoaded, volume, isWeb]);
 
   const stopMusic = useCallback(async () => {
     try {
-      await soundRef.current?.pauseAsync();
-    } catch {}
-  }, []);
+      if (isWeb) {
+        soundRef.current?.pause?.();
+      } else {
+        await soundRef.current?.pauseAsync?.();
+      }
+    } catch (e) {
+      console.log('[MindfulEating] stop error', e);
+    }
+  }, [isWeb]);
 
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       (async () => {
         try {
-          await soundRef.current?.unloadAsync();
-        } catch {}
+          if (isWeb) {
+            soundRef.current?.unload?.();
+          } else {
+            await soundRef.current?.unloadAsync?.();
+          }
+        } catch (e) {
+          console.log('[MindfulEating] cleanup error', e);
+        }
       })();
     };
-  }, []);
+  }, [isWeb]);
 
   useEffect(() => {
     if (running) {
@@ -152,12 +237,16 @@ export default function MindfulEatingScreen() {
     if (!soundRef.current) return;
     (async () => {
       try {
-        await soundRef.current.setVolumeAsync(volume);
+        if (isWeb) {
+          soundRef.current?.setVolume?.(volume);
+        } else {
+          await soundRef.current.setVolumeAsync?.(volume);
+        }
       } catch (e) {
         console.log('[MindfulEating] volume error', e);
       }
     })();
-  }, [volume]);
+  }, [volume, isWeb]);
 
   useEffect(() => {
     reloadTrack();
@@ -179,7 +268,7 @@ export default function MindfulEatingScreen() {
   const secs = Math.floor(remaining % 60).toString().padStart(2, '0');
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.header}>
