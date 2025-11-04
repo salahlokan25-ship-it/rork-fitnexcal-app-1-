@@ -49,7 +49,7 @@ export default function PlanScreen() {
             testID="plan-hero-image"
             source={{
               uri:
-                'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/olgx27fn4nay26itpohb4',
+                'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/1fpycg1leyfjbn8mrrg54',
             }}
             contentFit="cover"
             style={styles.heroImage}
@@ -112,7 +112,7 @@ export default function PlanScreen() {
           <Text style={styles.priceText}>Pro Monthly: ~ US $9.99 / month</Text>
           <Text style={styles.priceText}>Pro Annual: ~ US $52.99 / year (which equates to = US $4.99/mo, ~50% discount)</Text>
           <Text style={styles.priceText}>Premium Monthly: ~ US $14.99 / month</Text>
-          <Text style={styles.priceText}>Premium Annual: ~ US $99 / year (≈ US $8.33/mo)</Text>
+          <Text style={styles.priceText}>Premium Annual: ~ US $99 / year (= US $8.33/mo)</Text>
         </View>
 
         <TouchableOpacity
