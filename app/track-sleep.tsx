@@ -52,28 +52,28 @@ export default function TrackSleepScreen() {
     const offsetY = event.nativeEvent.contentOffset.y;
     const index = Math.round(offsetY / 48);
     const newHour = hours[index];
-    if (newHour !== undefined && newHour !== hour) {
+    if (newHour !== undefined) {
       setHour(newHour);
     }
-  }, [hour, hours]);
+  }, [hours]);
 
   const handleMinuteScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     const index = Math.round(offsetY / 48);
     const newMinute = minutes[index];
-    if (newMinute !== undefined && newMinute !== minute) {
+    if (newMinute !== undefined) {
       setMinute(newMinute);
     }
-  }, [minute, minutes]);
+  }, [minutes]);
 
   const handlePeriodScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     const index = Math.round(offsetY / 48);
     const newPeriod = periods[index];
-    if (newPeriod !== undefined && newPeriod !== period) {
+    if (newPeriod !== undefined) {
       setPeriod(newPeriod);
     }
-  }, [period, periods]);
+  }, [periods]);
 
   const handleLogSleep = useCallback(async () => {
     try {
@@ -169,6 +169,8 @@ export default function TrackSleepScreen() {
                     showsVerticalScrollIndicator={false}
                     snapToInterval={48}
                     decelerationRate="fast"
+                    onScroll={handleHourScroll}
+                    scrollEventThrottle={16}
                     onMomentumScrollEnd={handleHourScroll}
                     testID="hour-picker"
                   >
@@ -188,6 +190,8 @@ export default function TrackSleepScreen() {
                     showsVerticalScrollIndicator={false}
                     snapToInterval={48}
                     decelerationRate="fast"
+                    onScroll={handleMinuteScroll}
+                    scrollEventThrottle={16}
                     onMomentumScrollEnd={handleMinuteScroll}
                     testID="minute-picker"
                   >
@@ -206,6 +210,8 @@ export default function TrackSleepScreen() {
                     showsVerticalScrollIndicator={false}
                     snapToInterval={48}
                     decelerationRate="fast"
+                    onScroll={handlePeriodScroll}
+                    scrollEventThrottle={16}
                     onMomentumScrollEnd={handlePeriodScroll}
                     testID="period-picker"
                   >
