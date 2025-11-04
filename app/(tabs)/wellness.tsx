@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useTheme } from '@/hooks/theme';
-import { Moon, Settings, Play, Sparkles, Activity } from 'lucide-react-native';
+import { Moon, Settings, Play, User, Activity } from 'lucide-react-native';
 import { useSleep } from '@/hooks/sleep-store';
 import { useUser } from '@/hooks/user-store';
 
@@ -15,7 +15,7 @@ export default function WellnessScreen() {
   const { user } = useUser();
   const [showSleepModal, setShowSleepModal] = useState<boolean>(false);
   const [sleepHours, setSleepHours] = useState<string>('');
-  const [selectedPeriod, setSelectedPeriod] = useState<'Daily' | 'Weekly' | 'Monthly'>('Daily');
+
 
   const dynamic = stylesWithTheme(theme);
 
@@ -41,7 +41,7 @@ export default function WellnessScreen() {
   }, [sleepHours, logSleep]);
 
   const todaySleep = getTodaySleep();
-  const sleepQuality = 85;
+  const sleepQuality = todaySleep > 0 ? 85 : 0;
   const currentWeight = user?.weight || 165;
   const goalWeight = (user as any)?.weightGoal || 155;
   
@@ -84,36 +84,13 @@ export default function WellnessScreen() {
       />
       <View style={dynamic.container}>
         <ScrollView style={dynamic.scrollView} showsVerticalScrollIndicator={false} testID="wellness-scroll">
-          <View style={dynamic.periodSelector}>
-            <View style={dynamic.periodSelectorInner}>
-              <TouchableOpacity 
-                style={[dynamic.periodOption, selectedPeriod === 'Daily' && dynamic.periodOptionActive]}
-                onPress={() => setSelectedPeriod('Daily')}
-              >
-                <Text style={[dynamic.periodText, selectedPeriod === 'Daily' && dynamic.periodTextActive]}>Daily</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[dynamic.periodOption, selectedPeriod === 'Weekly' && dynamic.periodOptionActive]}
-                onPress={() => setSelectedPeriod('Weekly')}
-              >
-                <Text style={[dynamic.periodText, selectedPeriod === 'Weekly' && dynamic.periodTextActive]}>Weekly</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[dynamic.periodOption, selectedPeriod === 'Monthly' && dynamic.periodOptionActive]}
-                onPress={() => setSelectedPeriod('Monthly')}
-              >
-                <Text style={[dynamic.periodText, selectedPeriod === 'Monthly' && dynamic.periodTextActive]}>Monthly</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
           <View style={dynamic.content}>
             <AnimatedFadeIn delay={50}>
               <View style={dynamic.sleepCard}>
                 <View style={dynamic.sleepContent}>
                   <Text style={dynamic.cardLabel}>Sleep</Text>
-                  <Text style={dynamic.cardValue}>{todaySleep}h 30m</Text>
-                  <Text style={dynamic.cardSubtext}>Quality: {sleepQuality}% - Good</Text>
+                  <Text style={dynamic.cardValue}>{todaySleep > 0 ? `${todaySleep}h 30m` : '0h 0m'}</Text>
+                  <Text style={dynamic.cardSubtext}>Quality: {sleepQuality}%{sleepQuality > 0 ? ' - Good' : ''}</Text>
                   <TouchableOpacity 
                     style={dynamic.primaryButton}
                     onPress={() => setShowSleepModal(true)}
@@ -160,15 +137,15 @@ export default function WellnessScreen() {
               >
                 <View style={dynamic.metContent}>
                   <Text style={dynamic.cardLabel}>MET Calculator</Text>
-                  <Text style={dynamic.cardValue}>10 Mins</Text>
-                  <Text style={dynamic.cardSubtext}>Streak: 5 days</Text>
+                  <Text style={dynamic.cardValue}>0 Mins</Text>
+                  <Text style={dynamic.cardSubtext}>Streak: 0 days</Text>
                   <TouchableOpacity style={dynamic.secondaryButton}>
                     <Play size={16} color="#fff" fill="#fff" />
                     <Text style={dynamic.secondaryButtonText}>Start a Session</Text>
                   </TouchableOpacity>
                 </View>
                 <View style={dynamic.metIcon}>
-                  <Activity size={48} color="#50E3C2" />
+                  <User size={48} color="#50E3C2" />
                 </View>
               </TouchableOpacity>
             </AnimatedFadeIn>
@@ -191,7 +168,7 @@ export default function WellnessScreen() {
                   </TouchableOpacity>
                 </View>
                 <View style={dynamic.vizImage}>
-                  <Sparkles size={48} color="#4A90E2" />
+                  <Activity size={48} color="#4A90E2" />
                 </View>
               </TouchableOpacity>
             </AnimatedFadeIn>
@@ -262,38 +239,8 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  periodSelector: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  periodSelectorInner: {
-    flexDirection: 'row' as const,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    borderRadius: 8,
-    padding: 4,
-    height: 40,
-  },
-  periodOption: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 6,
-  },
-  periodOptionActive: {
-    backgroundColor: '#4A90E2',
-  },
-  periodText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Theme.colors.textMuted,
-  },
-  periodTextActive: {
-    color: '#fff',
-    fontWeight: '600',
-  },
   content: {
     padding: 16,
-    paddingTop: 0,
   },
   cardLabel: {
     fontSize: 14,
