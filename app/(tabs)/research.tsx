@@ -103,6 +103,8 @@ export default function ResearchScreen() {
     <FoodCard
       food={item}
       onPress={handleFoodPress}
+      variant="grid"
+      containerStyle={{ flex: 1 }}
     />
   );
 
@@ -206,6 +208,8 @@ export default function ResearchScreen() {
               renderItem={renderFoodItem}
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
+              numColumns={2}
+              columnWrapperStyle={dynamic.gridRow}
               contentContainerStyle={dynamic.searchResultsList}
             />
           )}
@@ -227,6 +231,8 @@ export default function ResearchScreen() {
               renderItem={renderFoodItem}
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
+              numColumns={2}
+              columnWrapperStyle={dynamic.gridRow}
               contentContainerStyle={dynamic.searchResultsList}
             />
           )}
@@ -261,6 +267,9 @@ export default function ResearchScreen() {
                   renderItem={renderFoodItem}
                   keyExtractor={(item) => item.id}
                   showsVerticalScrollIndicator={false}
+                  numColumns={2}
+                  columnWrapperStyle={dynamic.gridRow}
+                  contentContainerStyle={dynamic.searchResultsList}
                 />
               )}
             </View>
@@ -382,8 +391,13 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
     fontStyle: 'italic',
   },
   searchResultsList: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 20,
+    gap: 12,
+  },
+  gridRow: {
+    gap: 12,
+    paddingHorizontal: 4,
   },
   filterButton: {
     padding: 4,
