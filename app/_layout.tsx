@@ -44,6 +44,9 @@ function AppContent() {
       <Stack.Screen name="add-food" options={{ presentation: "modal" }} />
       <Stack.Screen name="edit-profile" options={{ presentation: "modal" }} />
       <Stack.Screen name="log-exercise" options={{ headerShown: false }} />
+      <Stack.Screen name="track-sleep" options={{ headerShown: false }} />
+      <Stack.Screen name="future-visualizer" options={{ headerShown: false }} />
+      <Stack.Screen name="mindful-eating" options={{ headerShown: false }} />
     </Stack>
   );
 }
