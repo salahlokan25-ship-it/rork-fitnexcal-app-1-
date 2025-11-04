@@ -64,12 +64,29 @@ export async function generateFutureBodyVisualization(params: VisualizationParam
           .join(', ')}.`
       : '';
 
-    const basePrompt = `Fitness-safe edit. Fully clothed adult. Neutral background.
-You are a fitness body recomposition visualizer. Given a real full-body photo, generate a realistic prediction of the SAME person ${horizonText(
+    const basePrompt = `You are an advanced fitness body transformation visualizer AI. Create a highly realistic prediction showing the SAME person ${horizonText(
       horizon
     )} if they ${scenarioText(
       scenario
-    )}. Preserve face, skin tone, pose, clothing style and environment. Avoid unrealistic proportions. Subtle, science-guided changes only. ${statsText}\n\nRules:\n- Maintain identity and background.\n- Adjust body composition plausibly.\n- No text or watermarks.\n- Photo-realistic, studio quality.\n- If unsure, return an extremely subtle edit that keeps the original intact.\n- Reject and do not alter if the input appears underage or revealing.`;
+    )}.
+
+${statsText}
+
+CRITICAL REQUIREMENTS:
+- Preserve the person's identity: exact same face, facial features, skin tone, hair, and overall appearance
+- Keep the same pose, clothing style, and background environment
+- Apply scientifically accurate body composition changes based on the timeline and nutritional/training scenario
+- Make noticeable but realistic changes to body fat percentage, muscle definition, and overall physique
+- Changes should be progressive: subtle for 2 weeks, moderate for 1 month, significant for 3 months
+- Focus on realistic body recomposition: fat loss in problem areas (abdomen, hips, thighs), increased muscle definition in arms, shoulders, chest, legs
+- For weight loss: reduce body fat, show more muscle definition, slightly leaner face, more visible abs and muscle striations
+- For muscle gain: increase muscle size in major muscle groups, broader shoulders, bigger arms, more defined chest and back
+- NO text, watermarks, logos, or branding on the image
+- Photo-realistic quality with professional studio lighting
+- Maintain safety: only process fully clothed adults in appropriate poses
+- If input is inappropriate or unclear, return a very subtle edit
+
+Generate a clean, professional body transformation image without any watermarks or text overlays.`;
 
     const doRequest = async (img: string, prompt: string) => {
       console.log('[FutureVisualizer] request start');

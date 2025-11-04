@@ -499,10 +499,10 @@ const styles = StyleSheet.create({
   },
   pickerWrapper: {
     height: 56,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#1C2632',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#27303d',
     justifyContent: 'center',
     overflow: 'hidden',
   },
