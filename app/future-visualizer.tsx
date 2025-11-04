@@ -89,7 +89,8 @@ export default function FutureVisualizerScreen() {
 
           let horizon: '2w' | '1m' | '3m' = '3m';
           if (timeline === '3-months') horizon = '1m';
-          else if (timeline === '6-months' || timeline === '12-months') horizon = '3m';
+          else if (timeline === '6-months') horizon = '3m';
+          else if (timeline === '12-months') horizon = '3m';
 
           const result = await generateFutureBodyVisualization({
             scenario,
@@ -98,6 +99,8 @@ export default function FutureVisualizerScreen() {
             userStats: {
               weightKg: targetWeight,
               bodyFatPct: bodyFat,
+              avgDailyCalories: 2000 + (calories * 20),
+              avgProteinGrams: 150 + (protein * 1.5),
             },
           });
 
@@ -227,9 +230,9 @@ export default function FutureVisualizerScreen() {
                   dropdownIconColor="#ffffff"
                   testID="timeline-picker"
                 >
-                  <Picker.Item label="In 3 Months" value="3-months" />
-                  <Picker.Item label="In 6 Months" value="6-months" />
-                  <Picker.Item label="In 12 Months" value="12-months" />
+                  <Picker.Item label="3 Months" value="3-months" />
+                  <Picker.Item label="6 Months" value="6-months" />
+                  <Picker.Item label="12 Months" value="12-months" />
                 </Picker>
               </View>
             </View>
@@ -496,9 +499,10 @@ const styles = StyleSheet.create({
   },
   pickerWrapper: {
     height: 56,
-    backgroundColor: '#2d3748',
+    backgroundColor: '#0f172a',
     borderRadius: 8,
-    borderWidth: 0,
+    borderWidth: 1,
+    borderColor: '#1e293b',
     justifyContent: 'center',
     overflow: 'hidden',
   },
