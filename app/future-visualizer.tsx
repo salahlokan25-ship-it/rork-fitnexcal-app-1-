@@ -1,22 +1,28 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { Stack, router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { ArrowLeft, Camera, ImagePlus } from 'lucide-react-native';
+import { Picker } from '@react-native-picker/picker';
 import Slider from '@react-native-community/slider';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { generateFutureBodyVisualization } from '@/services/future-visualizer';
 
-type BodyToggle = 'current' | 'future';
+type GoalType = 'lose-weight' | 'maintain' | 'gain-muscle';
+type Timeline = '1-month' | '3-months' | '6-months';
 
 export default function FutureVisualizerScreen() {
   const insets = useSafeAreaInsets();
-  const [bodyToggle, setBodyToggle] = useState<BodyToggle>('future');
+  const [goalType, setGoalType] = useState<GoalType>('lose-weight');
+  const [timeline, setTimeline] = useState<Timeline>('3-months');
   const [targetWeight, setTargetWeight] = useState<number>(75);
   const [bodyFat, setBodyFat] = useState<number>(15);
   const [calories, setCalories] = useState<number>(-15);
   const [protein, setProtein] = useState<number>(10);
   const [sourceImage, setSourceImage] = useState<{ uri: string } | null>(null);
+  const [futureImage, setFutureImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   const pickFromLibrary = useCallback(async () => {
     try {
@@ -28,6 +34,7 @@ export default function FutureVisualizerScreen() {
       });
       if (!res.canceled && res.assets && res.assets[0]?.uri) {
         setSourceImage({ uri: res.assets[0].uri });
+        setFutureImage(null);
       }
     } catch (e) {
       console.error('[FutureVisualizer] pickFromLibrary error', e);
@@ -49,12 +56,68 @@ export default function FutureVisualizerScreen() {
       });
       if (!res.canceled && res.assets && res.assets[0]?.uri) {
         setSourceImage({ uri: res.assets[0].uri });
+        setFutureImage(null);
       }
     } catch (e) {
       console.error('[FutureVisualizer] takePhoto error', e);
       Alert.alert('Error', 'Could not take photo. Please try again.');
     }
   }, []);
+
+  const handleGenerateFuture = useCallback(async () => {
+    if (!sourceImage) {
+      Alert.alert('No Image', 'Please upload or take a photo first.');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch(sourceImage.uri);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      
+      reader.onloadend = async () => {
+        try {
+          const base64data = (reader.result as string).split(',')[1];
+          
+          let scenario: 'current' | 'reduce_15' | 'increase_protein' = 'current';
+          if (goalType === 'lose-weight' && calories < 0) {
+            scenario = 'reduce_15';
+          } else if (goalType === 'gain-muscle' && protein > 0) {
+            scenario = 'increase_protein';
+          }
+
+          let horizon: '2w' | '1m' | '3m' = '3m';
+          if (timeline === '1-month') horizon = '1m';
+          else if (timeline === '6-months') horizon = '3m';
+
+          const result = await generateFutureBodyVisualization({
+            scenario,
+            horizon,
+            imageBase64: base64data,
+            userStats: {
+              weightKg: targetWeight,
+              bodyFatPct: bodyFat,
+            },
+          });
+
+          setFutureImage(`data:image/jpeg;base64,${result.imageBase64}`);
+          Alert.alert('Success', 'Your future body has been generated!');
+        } catch (err) {
+          console.error('[FutureVisualizer] generation failed', err);
+          Alert.alert('Error', err instanceof Error ? err.message : 'Failed to generate future body. Please try again.');
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+      
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.error('[FutureVisualizer] image read error', err);
+      Alert.alert('Error', 'Failed to read image. Please try again.');
+      setIsGenerating(false);
+    }
+  }, [sourceImage, goalType, timeline, targetWeight, bodyFat, calories, protein]);
 
   const handleSetGoal = useCallback(() => {
     Alert.alert('Goal Set', 'Your fitness goal has been set successfully!');
@@ -81,44 +144,20 @@ export default function FutureVisualizerScreen() {
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 220 + insets.bottom }]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.toggleContainer}>
-            <View style={styles.toggleWrapper}>
-              <TouchableOpacity
-                onPress={() => setBodyToggle('current')}
-                style={[
-                  styles.toggleButton,
-                  bodyToggle === 'current' && styles.toggleButtonActive
-                ]}
-                testID="current-body-toggle"
-              >
-                <Text style={[
-                  styles.toggleText,
-                  bodyToggle === 'current' && styles.toggleTextActive
-                ]}>
-                  Current Body
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setBodyToggle('future')}
-                style={[
-                  styles.toggleButton,
-                  bodyToggle === 'future' && styles.toggleButtonActive
-                ]}
-                testID="future-body-toggle"
-              >
-                <Text style={[
-                  styles.toggleText,
-                  bodyToggle === 'future' && styles.toggleTextActive
-                ]}>
-                  Future Body
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
           <View style={styles.bodyImageContainer}>
             <View style={styles.bodyImageWrapper}>
-              {sourceImage ? (
+              {isGenerating ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#137fec" />
+                  <Text style={styles.loadingText}>Generating your future body...</Text>
+                </View>
+              ) : futureImage ? (
+                <Image 
+                  source={{ uri: futureImage }} 
+                  style={styles.bodyImage} 
+                  resizeMode="contain"
+                />
+              ) : sourceImage ? (
                 <Image 
                   source={{ uri: sourceImage.uri }} 
                   style={styles.bodyImage} 
@@ -164,14 +203,34 @@ export default function FutureVisualizerScreen() {
           <View style={styles.selectorsRow}>
             <View style={styles.selectContainer}>
               <Text style={styles.selectLabel}>Goal Type</Text>
-              <View style={styles.selectWrapper}>
-                <Text style={styles.selectValue}>Lose Weight</Text>
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  selectedValue={goalType}
+                  onValueChange={(value: GoalType) => setGoalType(value)}
+                  style={styles.picker}
+                  dropdownIconColor="#ffffff"
+                  testID="goal-type-picker"
+                >
+                  <Picker.Item label="Lose Weight" value="lose-weight" />
+                  <Picker.Item label="Maintain" value="maintain" />
+                  <Picker.Item label="Gain Muscle" value="gain-muscle" />
+                </Picker>
               </View>
             </View>
             <View style={styles.selectContainer}>
               <Text style={styles.selectLabel}>Timeline</Text>
-              <View style={styles.selectWrapper}>
-                <Text style={styles.selectValue}>In 3 Months</Text>
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  selectedValue={timeline}
+                  onValueChange={(value: Timeline) => setTimeline(value)}
+                  style={styles.picker}
+                  dropdownIconColor="#ffffff"
+                  testID="timeline-picker"
+                >
+                  <Picker.Item label="1 Month" value="1-month" />
+                  <Picker.Item label="3 Months" value="3-months" />
+                  <Picker.Item label="6 Months" value="6-months" />
+                </Picker>
               </View>
             </View>
           </View>
@@ -220,8 +279,8 @@ export default function FutureVisualizerScreen() {
               </View>
               <Slider
                 style={styles.slider}
-                minimumValue={-25}
-                maximumValue={25}
+                minimumValue={-100}
+                maximumValue={100}
                 value={calories}
                 onValueChange={setCalories}
                 minimumTrackTintColor="#137fec"
@@ -238,8 +297,8 @@ export default function FutureVisualizerScreen() {
               </View>
               <Slider
                 style={styles.slider}
-                minimumValue={-25}
-                maximumValue={25}
+                minimumValue={-100}
+                maximumValue={100}
                 value={protein}
                 onValueChange={setProtein}
                 minimumTrackTintColor="#137fec"
@@ -270,6 +329,16 @@ export default function FutureVisualizerScreen() {
               <Text style={styles.projectionChange}>-{(20 - bodyFat).toFixed(0)} %</Text>
             </View>
           </View>
+          <TouchableOpacity 
+            onPress={handleGenerateFuture} 
+            style={[styles.generateButton, isGenerating && styles.generateButtonDisabled]}
+            disabled={isGenerating || !sourceImage}
+            testID="generate-future-btn"
+          >
+            <Text style={styles.generateButtonText}>
+              {isGenerating ? 'Generating...' : 'Generate Future Body'}
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity 
             onPress={handleSetGoal} 
             style={styles.setGoalButton}
@@ -423,6 +492,47 @@ const styles = StyleSheet.create({
   },
   selectValue: {
     fontSize: 16,
+    color: '#ffffff',
+  },
+  pickerWrapper: {
+    height: 56,
+    backgroundColor: '#27303d',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#3f3f46',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  picker: {
+    color: '#ffffff',
+    height: 56,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  generateButton: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#22c55e',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  generateButtonDisabled: {
+    backgroundColor: '#3f3f46',
+  },
+  generateButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#ffffff',
   },
   slidersContainer: {
