@@ -168,7 +168,7 @@ export default function FutureVisualizerScreen() {
                 />
               ) : (
                 <Image
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/n668hlmcb1xt2g1yxhny8' }}
+                  source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBX-BZPEeMnjmEv4auoygb7lYAJaZINLyRTdoLHTrrq2IAcpxPfecu5sMNNmyHkPN7gMenbHDGtlqwJAT5TnptDT1O3rgT9X7MPphHO84ibXKj574NvWAdFriPLfZDmfVCVm0IJX_yBTgKuEyqLhQ1PhDIdnaDZJy12gskW3hBnulTERBZitmYB5Yy5o6MFYhCidRT9aj9nOjD5hO2ybyacld5Ldumfu4cTlz6gqPQsrs9aMThfMMEU2QSWjMoQhFqWzexCwpaffkQu' }}
                   style={styles.bodyImage}
                   resizeMode="contain"
                 />
