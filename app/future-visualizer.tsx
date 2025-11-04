@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { generateFutureBodyVisualization } from '@/services/future-visualizer';
 
 type GoalType = 'lose-weight' | 'maintain' | 'gain-muscle';
-type Timeline = '1-month' | '3-months' | '6-months';
+type Timeline = '3-months' | '6-months' | '12-months';
 
 export default function FutureVisualizerScreen() {
   const insets = useSafeAreaInsets();
@@ -88,8 +88,8 @@ export default function FutureVisualizerScreen() {
           }
 
           let horizon: '2w' | '1m' | '3m' = '3m';
-          if (timeline === '1-month') horizon = '1m';
-          else if (timeline === '6-months') horizon = '3m';
+          if (timeline === '3-months') horizon = '1m';
+          else if (timeline === '6-months' || timeline === '12-months') horizon = '3m';
 
           const result = await generateFutureBodyVisualization({
             scenario,
@@ -227,9 +227,9 @@ export default function FutureVisualizerScreen() {
                   dropdownIconColor="#ffffff"
                   testID="timeline-picker"
                 >
-                  <Picker.Item label="1 Month" value="1-month" />
-                  <Picker.Item label="3 Months" value="3-months" />
-                  <Picker.Item label="6 Months" value="6-months" />
+                  <Picker.Item label="In 3 Months" value="3-months" />
+                  <Picker.Item label="In 6 Months" value="6-months" />
+                  <Picker.Item label="In 12 Months" value="12-months" />
                 </Picker>
               </View>
             </View>
@@ -496,10 +496,9 @@ const styles = StyleSheet.create({
   },
   pickerWrapper: {
     height: 56,
-    backgroundColor: '#27303d',
+    backgroundColor: '#2d3748',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#3f3f46',
+    borderWidth: 0,
     justifyContent: 'center',
     overflow: 'hidden',
   },
