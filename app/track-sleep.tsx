@@ -205,7 +205,7 @@ export default function TrackSleepScreen() {
                     contentContainerStyle={dynamic.wheelScrollContent}
                     showsVerticalScrollIndicator={false}
                     snapToInterval={48}
-                    decelerationRate={0.98}
+                    decelerationRate="fast"
                     onMomentumScrollEnd={handleHourScrollEnd}
                     onScrollEndDrag={handleHourScrollEnd}
                     testID="hour-picker"
@@ -225,7 +225,7 @@ export default function TrackSleepScreen() {
                     contentContainerStyle={dynamic.wheelScrollContent}
                     showsVerticalScrollIndicator={false}
                     snapToInterval={48}
-                    decelerationRate={0.98}
+                    decelerationRate="fast"
                     onMomentumScrollEnd={handleMinuteScrollEnd}
                     onScrollEndDrag={handleMinuteScrollEnd}
                     testID="minute-picker"
@@ -244,7 +244,7 @@ export default function TrackSleepScreen() {
                     contentContainerStyle={dynamic.wheelScrollContent}
                     showsVerticalScrollIndicator={false}
                     snapToInterval={48}
-                    decelerationRate={0.98}
+                    decelerationRate="fast"
                     onMomentumScrollEnd={handlePeriodScrollEnd}
                     onScrollEndDrag={handlePeriodScrollEnd}
                     testID="period-picker"
