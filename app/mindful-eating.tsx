@@ -169,6 +169,14 @@ export default function MindfulEatingScreen() {
     setRunning((v) => !v);
   }, []);
 
+  const handleBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
+  }, [router]);
+
   const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
   const secs = Math.floor(remaining % 60).toString().padStart(2, '0');
 
@@ -179,7 +187,7 @@ export default function MindfulEatingScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.headerBtn} 
-          onPress={() => router.back()}
+          onPress={handleBack}
           testID="back-button"
         >
           <ArrowLeft size={24} color={theme.colors.text} />
