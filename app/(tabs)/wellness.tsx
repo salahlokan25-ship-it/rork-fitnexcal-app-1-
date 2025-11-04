@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useTheme } from '@/hooks/theme';
-import { Moon, Settings, Play, User, Activity } from 'lucide-react-native';
+import { Moon, Settings, Play, PersonStanding, Scan } from 'lucide-react-native';
 import { useSleep } from '@/hooks/sleep-store';
 import { useUser } from '@/hooks/user-store';
 
@@ -145,7 +145,7 @@ export default function WellnessScreen() {
                   </TouchableOpacity>
                 </View>
                 <View style={dynamic.metIcon}>
-                  <User size={48} color="#50E3C2" />
+                  <PersonStanding size={48} color="#50E3C2" />
                 </View>
               </TouchableOpacity>
             </AnimatedFadeIn>
@@ -168,7 +168,7 @@ export default function WellnessScreen() {
                   </TouchableOpacity>
                 </View>
                 <View style={dynamic.vizImage}>
-                  <Activity size={48} color="#4A90E2" />
+                  <Scan size={48} color="#4A90E2" />
                 </View>
               </TouchableOpacity>
             </AnimatedFadeIn>
