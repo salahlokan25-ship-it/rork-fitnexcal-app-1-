@@ -6,12 +6,13 @@ import { useTheme } from '@/hooks/theme';
 import { ArrowLeft, X, Play, VolumeX, Volume2 } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-type AudioChoice = 'Soothing Piano' | 'Rainfall' | 'Silent';
+type AudioChoice = 'Peaceful Piano' | 'Forest Rain' | 'Ocean Waves' | 'Meditation Ambient';
 
-const AUDIO_TRACKS: Record<AudioChoice, string | null> = {
-  'Soothing Piano': 'https://cdn.pixabay.com/download/audio/2021/10/15/audio_0f3f1e1b3a.mp3?filename=relaxing-piano-100532.mp3',
-  'Rainfall': 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=soft-rain-ambient-111154.mp3',
-  'Silent': null,
+const AUDIO_TRACKS: Record<AudioChoice, string> = {
+  'Peaceful Piano': 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_58e1f0f7c3.mp3?filename=peaceful-piano-ambient-112191.mp3',
+  'Forest Rain': 'https://cdn.pixabay.com/download/audio/2021/09/13/audio_bf0c1ac3a1.mp3?filename=forest-rain-ambient-9162.mp3',
+  'Ocean Waves': 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_4b2b742d4c.mp3?filename=calm-ocean-waves-110624.mp3',
+  'Meditation Ambient': 'https://cdn.pixabay.com/download/audio/2022/10/25/audio_8f2e9b7c26.mp3?filename=meditation-background-ambient-124008.mp3',
 };
 
 const MINDFUL_TIPS = [
@@ -32,7 +33,7 @@ export default function MindfulEatingScreen() {
   const [totalSeconds] = useState<number>(20 * 60);
   const [remaining, setRemaining] = useState<number>(20 * 60);
   const [running, setRunning] = useState<boolean>(false);
-  const [audioChoice, setAudioChoice] = useState<AudioChoice>('Soothing Piano');
+  const [audioChoice, setAudioChoice] = useState<AudioChoice>('Peaceful Piano');
   const [volume, setVolume] = useState<number>(0.6);
   const [showTip, setShowTip] = useState<boolean>(true);
   const [currentTip] = useState<string>(MINDFUL_TIPS[Math.floor(Math.random() * MINDFUL_TIPS.length)]);
@@ -60,8 +61,6 @@ export default function MindfulEatingScreen() {
       }
 
       const uri = AUDIO_TRACKS[audioChoice];
-      if (!uri) return null;
-
       const created = await Audio.Sound.createAsync(
         { uri },
         { isLooping: true, volume }
@@ -84,7 +83,7 @@ export default function MindfulEatingScreen() {
       const snd = await ensureSoundLoaded();
       if (snd) {
         await snd.setVolumeAsync(volume);
-        if (running && audioChoice !== 'Silent') {
+        if (running) {
           try {
             await snd.playAsync();
           } catch (e) {
@@ -98,7 +97,6 @@ export default function MindfulEatingScreen() {
   }, [ensureSoundLoaded, running, volume, audioChoice]);
 
   const startMusicIfNeeded = useCallback(async () => {
-    if (audioChoice === 'Silent') return;
     const snd = await ensureSoundLoaded();
     if (!snd) return;
     try {
@@ -236,7 +234,7 @@ export default function MindfulEatingScreen() {
         <View style={styles.bottomSection}>
           <View style={styles.controlsSection}>
             <View style={styles.segmentedControl}>
-              {(['Soothing Piano', 'Rainfall', 'Silent'] as AudioChoice[]).map((choice) => (
+              {(['Peaceful Piano', 'Forest Rain', 'Ocean Waves', 'Meditation Ambient'] as AudioChoice[]).map((choice) => (
                 <TouchableOpacity
                   key={choice}
                   style={[
