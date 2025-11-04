@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/theme';
-import { Smile, Mic, AudioLines, Square, Leaf, Angry, Meh, Frown, Plus } from 'lucide-react-native';
+import { Smile, Mic, AudioLines, Square, Leaf, Angry, Meh, Frown, Plus, ArrowLeft } from 'lucide-react-native';
 import { useMood } from '@/hooks/mood-store';
 import { useNutrition } from '@/hooks/nutrition-store';
 import { router } from 'expo-router';
@@ -205,88 +205,69 @@ export default function MindScreen() {
   return (
     <View style={[dynamic.container, { paddingTop: insets.top }]}>
       <ScrollView style={dynamic.scrollView} showsVerticalScrollIndicator={false} testID="mind-scroll">
-        <AnimatedFadeIn delay={50}>
-          <View style={dynamic.header}>
-            <Text style={dynamic.title}>Mind</Text>
-            <Text style={dynamic.subtitle}>Track mood, log by voice & practice mindful eating</Text>
+        <AnimatedFadeIn delay={40}>
+          <View style={dynamic.topHeaderRow}>
+            <TouchableOpacity
+              onPress={() => {
+                if (router.canGoBack()) router.back();
+                else router.replace('/');
+              }}
+              style={dynamic.headerBtn}
+              testID="mind-back"
+            >
+              <ArrowLeft size={22} color={theme.colors.text} />
+            </TouchableOpacity>
+            <Text style={dynamic.headerTitle}>MindFull Mind</Text>
+            <View style={dynamic.headerBtn} />
           </View>
+          <Text style={dynamic.headerSubtitle}>Connect with your mind and body.</Text>
         </AnimatedFadeIn>
 
         <AnimatedFadeIn delay={100}>
           <TouchableOpacity 
-            style={dynamic.moodCard}
+            style={dynamic.tile}
             onPress={() => setMoodModal(true)}
             testID="mood-card"
           >
-            <View style={dynamic.moodIconContainer}>
-              <Smile size={32} color="#F59E0B" />
-            </View>
-            <View style={dynamic.moodContent}>
-              <Text style={dynamic.moodTitle}>Log Mood</Text>
-              <Text style={dynamic.moodSubtitle}>Track emotions & eating patterns</Text>
-              <Text style={dynamic.moodDescription}>
-                Capture stress, boredom, or emotions to get helpful nudges and understand your eating triggers.
-              </Text>
-            </View>
-            <View style={dynamic.moodBadge}>
-              <Text style={dynamic.moodBadgeText}>Log</Text>
+            <Text style={dynamic.tileTitle}>Log Mood</Text>
+            <Text style={dynamic.tileSubtitle}>Track emotions and eating patterns.</Text>
+            <View style={dynamic.roundIconPrimary}>
+              <Smile size={28} color={theme.colors.primary700} />
             </View>
           </TouchableOpacity>
         </AnimatedFadeIn>
 
-        <AnimatedFadeIn delay={150}>
-          <View style={dynamic.voiceCard}>
-            <View style={dynamic.voiceIconContainer}>
-              <Mic size={32} color={theme.colors.primary700} />
+        <AnimatedFadeIn delay={140}>
+          <TouchableOpacity 
+            style={dynamic.tile}
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                if (isRecording) stopRecordingWeb(); else startRecordingWeb();
+              } else {
+                setShowVoiceModal(true);
+              }
+            }}
+            testID="voice-card"
+          >
+            <Text style={dynamic.tileTitle}>Log by Voice</Text>
+            <Text style={dynamic.tileSubtitle}>{Platform.OS === 'web' ? 'Press to record by voice.' : 'Press to record by voice.'}</Text>
+            <View style={dynamic.roundIconPrimary}>
+              <Mic size={28} color={theme.colors.primary700} />
             </View>
-            <View style={dynamic.voiceContent}>
-              <Text style={dynamic.voiceTitle}>Log by Voice</Text>
-              <Text style={dynamic.voiceSubtitle}>
-                {Platform.OS === 'web' ? 'Press to record, then analyze' : 'Use dictation to describe your meal'}
-              </Text>
-              <Text style={dynamic.voiceDescription}>
-                Speak naturally about what you ate and AI will analyze nutrition automatically.
-              </Text>
-            </View>
-            {Platform.OS === 'web' ? (
-              <TouchableOpacity
-                onPress={isRecording ? stopRecordingWeb : startRecordingWeb}
-                style={[dynamic.voiceActionBtn, isRecording ? dynamic.voiceStopBtn : undefined]}
-                testID="voice-record-btn"
-              >
-                {isRecording ? <Square size={18} color="#fff" /> : <AudioLines size={18} color="#fff" />}
-                <Text style={dynamic.voiceActionText}>{isRecording ? 'Stop' : 'Record'}</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity onPress={() => setShowVoiceModal(true)} style={dynamic.voiceActionBtn} testID="voice-open-modal">
-                <AudioLines size={18} color="#fff" />
-                <Text style={dynamic.voiceActionText}>Open</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          {sttError && (
-            <Text style={[dynamic.errorText, { marginHorizontal: 20, marginTop: -8 }]}>{sttError}</Text>
-          )}
+          </TouchableOpacity>
+          {sttError && <Text style={[dynamic.errorText, { textAlign: 'center', marginTop: -8 }]}>{sttError}</Text>}
         </AnimatedFadeIn>
 
-        <AnimatedFadeIn delay={200}>
+        <AnimatedFadeIn delay={180}>
           <TouchableOpacity 
-            style={dynamic.mindfulCard}
+            style={dynamic.tile}
             onPress={() => router.push('/mindful-eating')}
             testID="mindful-eating-card"
           >
-            <View style={dynamic.mindfulIconContainer}>
-              <Leaf size={32} color="#10B981" />
-            </View>
-            <View style={dynamic.mindfulContent}>
-              <Text style={dynamic.mindfulTitle}>Mindful Eating Mode</Text>
-              <Text style={dynamic.mindfulSubtitle}>Soft music + slow eating timer</Text>
-              <Text style={dynamic.mindfulDescription}>
-                Create a peaceful eating environment with calming music and gentle reminders to eat slowly.
-              </Text>
-            </View>
-            <View style={dynamic.mindfulBadge}>
-              <Text style={dynamic.mindfulBadgeText}>Start</Text>
+            <Text style={dynamic.tileTitle}>Mindful Eating</Text>
+            <Text style={dynamic.tileSubtitle}>Timer and calming music.</Text>
+            <View style={dynamic.roundIconPrimary}>
+              <Leaf size={28} color={theme.colors.primary700} />
             </View>
           </TouchableOpacity>
         </AnimatedFadeIn>
@@ -557,197 +538,18 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: Theme.colors.text,
-    letterSpacing: -0.5,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Theme.colors.textMuted,
-  },
-  moodCard: {
-    backgroundColor: Theme.colors.surface,
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: Theme.shadow.soft.shadowColor,
-    shadowOffset: Theme.shadow.soft.shadowOffset,
-    shadowOpacity: Theme.shadow.soft.shadowOpacity,
-    shadowRadius: Theme.shadow.soft.shadowRadius,
-    elevation: Theme.shadow.soft.elevation,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-  },
-  moodIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFF7ED',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#FDBA74',
-  },
-  moodContent: {
-    marginBottom: 16,
-  },
-  moodTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: Theme.colors.text,
-    marginBottom: 8,
-  },
-  moodSubtitle: {
-    fontSize: 16,
-    color: Theme.colors.textMuted,
-    marginBottom: 8,
-  },
-  moodDescription: {
-    fontSize: 14,
-    color: Theme.colors.textMuted,
-    lineHeight: 20,
-  },
-  moodBadge: {
-    backgroundColor: '#F59E0B',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  moodBadgeText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  voiceCard: {
-    backgroundColor: Theme.colors.surface,
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: Theme.shadow.soft.shadowColor,
-    shadowOffset: Theme.shadow.soft.shadowOffset,
-    shadowOpacity: Theme.shadow.soft.shadowOpacity,
-    shadowRadius: Theme.shadow.soft.shadowRadius,
-    elevation: Theme.shadow.soft.elevation,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-  },
-  voiceIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#EEF4FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Theme.colors.primary700,
-  },
-  voiceContent: {
-    marginBottom: 16,
-  },
-  voiceTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: Theme.colors.text,
-    marginBottom: 8,
-  },
-  voiceSubtitle: {
-    fontSize: 16,
-    color: Theme.colors.textMuted,
-    marginBottom: 8,
-  },
-  voiceDescription: {
-    fontSize: 14,
-    color: Theme.colors.textMuted,
-    lineHeight: 20,
-  },
-  voiceActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: Theme.colors.primary700,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  voiceStopBtn: {
-    backgroundColor: '#EF4444',
-  },
-  voiceActionText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  mindfulCard: {
-    backgroundColor: Theme.colors.surface,
-    marginHorizontal: 20,
-    marginBottom: 24,
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: Theme.shadow.soft.shadowColor,
-    shadowOffset: Theme.shadow.soft.shadowOffset,
-    shadowOpacity: Theme.shadow.soft.shadowOpacity,
-    shadowRadius: Theme.shadow.soft.shadowRadius,
-    elevation: Theme.shadow.soft.elevation,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-  },
-  mindfulIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#ECFDF5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  mindfulContent: {
-    marginBottom: 16,
-  },
-  mindfulTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: Theme.colors.text,
-    marginBottom: 8,
-  },
-  mindfulSubtitle: {
-    fontSize: 16,
-    color: Theme.colors.textMuted,
-    marginBottom: 8,
-  },
-  mindfulDescription: {
-    fontSize: 14,
-    color: Theme.colors.textMuted,
-    lineHeight: 20,
-  },
-  mindfulBadge: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  mindfulBadgeText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  modalOverlay: {
+  topHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8 },
+  headerBtn: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: '800', color: Theme.colors.text },
+  headerSubtitle: { textAlign: 'center', color: Theme.colors.textMuted, fontSize: 16, paddingHorizontal: 24, paddingTop: 6, paddingBottom: 18 },
+  tile: { backgroundColor: Theme.colors.surface, marginHorizontal: 16, marginVertical: 14, borderRadius: 16, paddingVertical: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Theme.colors.border },
+  tileTitle: { fontSize: 20, fontWeight: '800', color: Theme.colors.text, marginBottom: 6 },
+  tileSubtitle: { fontSize: 14, color: Theme.colors.textMuted, marginBottom: 18 },
+  roundIconPrimary: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(59,130,246,0.15)' },
+  voiceActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Theme.colors.primary700, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 16, alignSelf: 'center', marginTop: 8 },
+  voiceStopBtn: { backgroundColor: '#EF4444' },
+  voiceActionText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
