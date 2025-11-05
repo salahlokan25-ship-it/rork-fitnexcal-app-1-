@@ -2,98 +2,89 @@ import { Tabs } from 'expo-router';
 import { Home, Camera, Search, MessageCircle, Settings, Plus, Heart, Brain } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/theme';
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   console.log('[CustomTabBar] render', { index: state.index, routes: state.routes.map((r: any) => r.name) });
   const { theme } = useTheme();
   const styles = stylesWithTheme(theme);
-  const insets = useSafeAreaInsets();
 
   return (
-    <LinearGradient
-      colors={['#5B8FF9', '#3B82F6', '#2563EB']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[styles.tabBarContainer, { paddingBottom: Math.max(insets.bottom, 10) }]}
-    >
-      <View style={styles.tabBarInner} testID="custom-tab-bar">
-        {state.routes.map((route: any, index: number) => {
-          const { options } = descriptors[route.key];
-          const label: string =
-            options.tabBarLabel !== undefined
-              ? (options.tabBarLabel as string)
-              : options.title !== undefined
-              ? (options.title as string)
-              : (route.name as string);
+    <View style={styles.tabBarContainer} testID="custom-tab-bar">
+      {state.routes.map((route: any, index: number) => {
+        const { options } = descriptors[route.key];
+        const label: string =
+          options.tabBarLabel !== undefined
+            ? (options.tabBarLabel as string)
+            : options.title !== undefined
+            ? (options.title as string)
+            : (route.name as string);
 
-          const isFocused = state.index === index;
-          const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
-            }
-          };
-
-          const onLongPress = () => {
-            navigation.emit({ type: 'tabLongPress', target: route.key });
-          };
-
-          const inactiveColor = 'rgba(255,255,255,0.6)' as const;
-          const activeColor = '#FFFFFF' as const;
-          const color = isFocused ? activeColor : inactiveColor;
-          const iconSize = 24 as const;
-          const Icon = options.tabBarIcon as
-            | ((props: { color: string; size: number }) => React.ReactNode)
-            | undefined;
-
-          if (route.name === 'scan') {
-            return (
-              <View key={route.key} style={styles.centerSlot}>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityState={isFocused ? { selected: true } : {}}
-                  testID="tab-item-scan"
-                  onPress={onPress}
-                  onLongPress={onLongPress}
-                  style={styles.centerButtonWrapper}
-                >
-                  <View style={styles.centerButton}>
-                    <Plus color="#FFFFFF" size={32} strokeWidth={3} />
-                  </View>
-                  <Text style={styles.centerLabel}>Scan</Text>
-                </TouchableOpacity>
-              </View>
-            );
+        const isFocused = state.index === index;
+        const onPress = () => {
+          const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
           }
+        };
 
+        const onLongPress = () => {
+          navigation.emit({ type: 'tabLongPress', target: route.key });
+        };
+
+        // default styles for regular tabs
+        const inactiveText = 'rgba(255,255,255,0.9)';
+        const activeText = '#FFFFFF';
+        const color = isFocused ? activeText : inactiveText;
+        const iconSize = 22 as const;
+        const Icon = options.tabBarIcon as
+          | ((props: { color: string; size: number }) => React.ReactNode)
+          | undefined;
+
+        if (route.name === 'scan') {
+          const centerActiveColor = '#FFFFFF' as const;
           return (
-            <TouchableOpacity
-              key={route.key}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={`tab-item-${route.name}`}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              style={styles.tabItemWrapper}
-            >
-              <View style={styles.tabItem}>
-                {isFocused && <View style={styles.activeIndicator} />}
-                <View style={styles.iconWrapper}>
-                  {Icon ? Icon({ color, size: iconSize }) : null}
+            <View key={route.key} style={styles.centerSlot}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityState={isFocused ? { selected: true } : {}}
+                testID="tab-item-scan"
+                onPress={onPress}
+                onLongPress={onLongPress}
+                style={styles.centerButtonWrapper}
+              >
+                <View style={styles.centerButton}>
+                  <Plus color={centerActiveColor} size={30} />
                 </View>
-                <Text style={[styles.label, { color }]} numberOfLines={1}>
-                  {label}
-                </Text>
-              </View>
-            </TouchableOpacity>
+                <Text style={styles.centerLabel}>Scan</Text>
+              </TouchableOpacity>
+            </View>
           );
-        })}
-      </View>
-    </LinearGradient>
+        }
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={isFocused ? { selected: true } : {}}
+            accessibilityLabel={options.tabBarAccessibilityLabel}
+            testID={`tab-item-${route.name}`}
+            onPress={onPress}
+            onLongPress={onLongPress}
+            style={styles.tabItemWrapper}
+          >
+            <View style={[styles.pill, isFocused ? styles.pillActive : styles.pillInactive]}>
+              <View style={styles.iconWrapper}>
+                {Icon ? Icon({ color, size: iconSize }) : null}
+              </View>
+              <Text style={[styles.label, { color }]} numberOfLines={1}>
+                {label}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
   );
 }
 
@@ -162,38 +153,23 @@ function RootLayoutNav() {
 
 const stylesWithTheme = (Theme: any) => StyleSheet.create({
   tabBarContainer: {
-    borderTopWidth: 0,
-    shadowColor: '#000000',
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: -3 },
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  tabBarInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingTop: 8,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 16,
+    backgroundColor: Theme.colors.primary700,
+    borderTopWidth: 0,
+    shadowColor: '#000000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: -2 },
+    shadowRadius: 12,
+    elevation: 8,
   },
   tabItemWrapper: {
     flex: 1,
-    paddingHorizontal: 2,
-  },
-  tabItem: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    position: 'relative',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    top: 0,
-    width: 32,
-    height: 3,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 2,
+    paddingHorizontal: 4,
   },
   centerSlot: {
     flex: 1,
@@ -202,35 +178,46 @@ const stylesWithTheme = (Theme: any) => StyleSheet.create({
   centerButtonWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -28,
+    marginTop: -18,
   },
   centerButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    width: 64,
+    height: 64,
+    borderRadius: 64,
+    backgroundColor: Theme.colors.primary500,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000000',
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
+    shadowRadius: 8,
     elevation: 10,
   },
   centerLabel: {
-    marginTop: 6,
+    marginTop: 4,
     color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  pill: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    paddingVertical: 8,
+  },
+  pillActive: {
+    backgroundColor: Theme.colors.primary500,
+  },
+  pillInactive: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   iconWrapper: {
-    marginBottom: 2,
+    marginBottom: 4,
   },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
 

@@ -144,7 +144,7 @@ export default function FutureVisualizerScreen() {
         </View>
 
         <ScrollView 
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: 240 + insets.bottom }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 220 + insets.bottom }]}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.bodyImageContainer}>
@@ -443,8 +443,8 @@ const styles = StyleSheet.create({
   },
   bodyImageContainer: {
     width: '100%',
-    paddingVertical: 8,
-    minHeight: 340,
+    paddingVertical: 12,
+    minHeight: 420,
   },
   bodyImageWrapper: {
     flex: 1,
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     color: '#71717a',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   compareImageBox: {
     flex: 1,
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
   photoButtonsRow: {
     flexDirection: 'row',
     gap: 16,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   photoButton: {
     flex: 1,
@@ -519,14 +519,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#ffffff',
     paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 6,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   selectorsRow: {
     flexDirection: 'row',
     gap: 16,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
   selectContainer: {
     flex: 1,
@@ -595,8 +595,8 @@ const styles = StyleSheet.create({
   },
   slidersContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 20,
+    paddingVertical: 16,
+    gap: 24,
   },
   sliderGroup: {
     width: '100%',
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 16,
     fontSize: 12,
     textAlign: 'center',
     color: '#52525b',
