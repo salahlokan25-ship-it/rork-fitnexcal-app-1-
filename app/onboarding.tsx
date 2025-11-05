@@ -77,7 +77,7 @@ export default function OnboardingScreen() {
           goal: formData.goal,
         });
         await completeOnboarding();
-        router.replace('/plan');
+        router.replace('/paywall');
       } catch (_err) {
         Alert.alert('Error', 'Failed to create profile. Please try again.');
       }
