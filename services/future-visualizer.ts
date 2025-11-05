@@ -64,7 +64,8 @@ export async function generateFutureBodyVisualization(params: VisualizationParam
           .join(', ')}.`
       : '';
 
-    const basePrompt = `You are an advanced fitness body transformation visualizer AI. Create a highly realistic prediction of the SAME person ${horizonText(
+    const basePrompt = `Fitness-safe edit. Fully clothed adult. Neutral background.
+You are an advanced body transformation visualizer. Generate a photo-real prediction of the SAME person ${horizonText(
       horizon
     )} if they ${scenarioText(
       scenario
@@ -73,22 +74,20 @@ export async function generateFutureBodyVisualization(params: VisualizationParam
 ${statsText}
 
 STRICT VISUAL RULES:
-- Preserve identity perfectly: same face, facial features, skin tone, hair, and general appearance
-- Keep pose, clothing style, camera angle, framing, and background environment unchanged
-- Apply scientifically plausible body composition changes only, based on scenario and timeline
-- Magnitude guidance: very subtle at 2 weeks, moderate at 1 month, clearly noticeable at 3 months
-- Recomposition details: realistic fat loss (abdomen/hips/thighs), improved muscle definition (arms/shoulders/chest/back/legs)
-- Weight-loss focus: slightly leaner face, reduced abdominal volume, more visible definition (not exaggerated)
-- Muscle-gain focus: proportional hypertrophy in major muscle groups, broader shoulders and back, improved posture without cartoonish size
-- Photographic quality: photo-realistic, clean lighting, no artifacts
+- Preserve identity perfectly: same face, skin tone, hair, and overall appearance
+- Keep pose, clothing style, camera angle, framing, and background unchanged
+- Apply scientifically plausible body composition changes only, scaled to timeline
+- Magnitude guidance: subtle at 2w, moderate at 1m, CLEARLY NOTICEABLE at 3m
+- For fat loss: visibly leaner abdomen/hips/thighs, slight facial leanness, sharper definition
+- For muscle gain: proportional hypertrophy (shoulders/chest/back/arms/legs), improved posture, not cartoonish
+- Photographic quality: photo-realistic, clean lighting, minimal artifacts
 
 WATERMARK/TEXT POLICY:
 - Do NOT add any text, logos, brand marks, or watermarks
-- If ANY watermark or text is present in the input or would be produced, REMOVE it cleanly and reconstruct underlying pixels to look natural
+- If ANY watermark or text is present or would be produced (including the word "rork"), REMOVE it cleanly and reconstruct underlying pixels naturally
 
 SAFETY:
-- Only edit fully clothed adults in appropriate poses
-- If the input is inappropriate or unclear, return an extremely subtle, safe edit that preserves the original
+- Only edit fully clothed adults; if unsure, produce an extremely subtle, safe edit preserving the original
 
 Return only the edited image.`;
 
@@ -143,7 +142,16 @@ Return only the edited image.`;
       }
 
       const explanation2 = `Prediction ${horizonText(horizon)} for scenario: ${scenarioText(scenario)}.`;
-      return { imageBase64: data2.image.base64Data, explanation: explanation2 };
+      const cleanupReq = await doRequest(
+        `data:image/jpeg;base64,${data2.image.base64Data}`,
+        'Remove any text, logo, or watermark from this image, especially the word "rork". Reconstruct underlying pixels naturally. Return only the cleaned photo.'
+      );
+      let cleanedData: { image?: { base64Data: string } } = {};
+      try {
+        cleanedData = (await cleanupReq.json()) as { image?: { base64Data: string } };
+      } catch {}
+      const cleaned = cleanedData.image?.base64Data || data2.image.base64Data;
+      return { imageBase64: cleaned, explanation: explanation2 };
     }
 
     const explanation = `Prediction ${horizonText(horizon)} for scenario: ${scenarioText(scenario)}.`;
@@ -151,7 +159,16 @@ Return only the edited image.`;
     if (!imgOut) {
       throw new Error('Could not generate future visualization. Please try a clearer full-body photo and try again.');
     }
-    return { imageBase64: imgOut, explanation };
+    const cleanupReq = await doRequest(
+      `data:image/jpeg;base64,${imgOut}`,
+      'Remove any text, logo, or watermark from this image, especially the word "rork". Reconstruct underlying pixels naturally. Return only the cleaned photo.'
+    );
+    let cleanedData: { image?: { base64Data: string } } = {};
+    try {
+      cleanedData = (await cleanupReq.json()) as { image?: { base64Data: string } };
+    } catch {}
+    const cleaned = cleanedData.image?.base64Data || imgOut;
+    return { imageBase64: cleaned, explanation };
   } catch (e) {
     console.error('[FutureVisualizer] generation error', e);
     if (e instanceof Error && e.message === 'blocked') {

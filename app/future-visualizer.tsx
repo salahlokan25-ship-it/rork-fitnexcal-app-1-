@@ -154,16 +154,29 @@ export default function FutureVisualizerScreen() {
                   <ActivityIndicator size="large" color="#137fec" />
                   <Text style={styles.loadingText}>Generating your future body...</Text>
                 </View>
-              ) : futureImage ? (
-                <Image 
-                  source={{ uri: futureImage }} 
-                  style={styles.bodyImage} 
-                  resizeMode="contain"
-                />
+              ) : futureImage && sourceImage ? (
+                <View style={styles.compareRow}>
+                  <View style={styles.compareCol}>
+                    <Text style={styles.compareLabel}>Before</Text>
+                    <Image
+                      source={{ uri: sourceImage.uri }}
+                      style={styles.bodyImage}
+                      resizeMode="contain"
+                    />
+                  </View>
+                  <View style={styles.compareCol}>
+                    <Text style={styles.compareLabel}>After</Text>
+                    <Image
+                      source={{ uri: futureImage }}
+                      style={styles.bodyImage}
+                      resizeMode="contain"
+                    />
+                  </View>
+                </View>
               ) : sourceImage ? (
-                <Image 
-                  source={{ uri: sourceImage.uri }} 
-                  style={styles.bodyImage} 
+                <Image
+                  source={{ uri: sourceImage.uri }}
+                  style={styles.bodyImage}
                   resizeMode="contain"
                 />
               ) : (
@@ -431,6 +444,21 @@ const styles = StyleSheet.create({
   bodyImage: {
     width: '100%',
     height: '100%',
+  },
+  compareRow: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 8,
+  },
+  compareCol: {
+    flex: 1,
+  },
+  compareLabel: {
+    color: '#94a3b8',
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 6,
   },
   contentPadding: {
     paddingHorizontal: 16,
