@@ -47,7 +47,7 @@ export default function AuthWelcomeScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Theme.colors.primary700,
+    backgroundColor: Theme.colors.background,
   },
   center: {
     flex: 1,
