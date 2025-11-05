@@ -562,6 +562,8 @@ const styles = StyleSheet.create({
   picker: {
     color: '#ffffff',
     height: 56,
+    backgroundColor: '#1C2632',
+    borderRadius: 8,
   },
   loadingContainer: {
     flex: 1,
