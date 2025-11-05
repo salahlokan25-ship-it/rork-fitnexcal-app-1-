@@ -158,27 +158,36 @@ export default function FutureVisualizerScreen() {
                 <View style={styles.compareRow}>
                   <View style={styles.compareCol}>
                     <Text style={styles.compareLabel}>Before</Text>
-                    <Image
-                      source={{ uri: sourceImage.uri }}
-                      style={styles.bodyImage}
-                      resizeMode="contain"
-                    />
+                    <View style={styles.compareImageBox}>
+                      <Image
+                        source={{ uri: sourceImage.uri }}
+                        style={styles.bodyImage}
+                        resizeMode="cover"
+                        testID="before-image"
+                      />
+                    </View>
                   </View>
                   <View style={styles.compareCol}>
                     <Text style={styles.compareLabel}>After</Text>
-                    <Image
-                      source={{ uri: futureImage }}
-                      style={styles.bodyImage}
-                      resizeMode="contain"
-                    />
+                    <View style={styles.compareImageBox}>
+                      <Image
+                        source={{ uri: futureImage }}
+                        style={styles.bodyImage}
+                        resizeMode="cover"
+                        testID="after-image"
+                      />
+                    </View>
                   </View>
                 </View>
               ) : sourceImage ? (
-                <Image
-                  source={{ uri: sourceImage.uri }}
-                  style={styles.bodyImage}
-                  resizeMode="contain"
-                />
+                <View style={styles.compareSingleBox}>
+                  <Image
+                    source={{ uri: sourceImage.uri }}
+                    style={styles.bodyImage}
+                    resizeMode="cover"
+                    testID="single-image"
+                  />
+                </View>
               ) : (
                 <Image
                   source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBX-BZPEeMnjmEv4auoygb7lYAJaZINLyRTdoLHTrrq2IAcpxPfecu5sMNNmyHkPN7gMenbHDGtlqwJAT5TnptDT1O3rgT9X7MPphHO84ibXKj574NvWAdFriPLfZDmfVCVm0IJX_yBTgKuEyqLhQ1PhDIdnaDZJy12gskW3hBnulTERBZitmYB5Yy5o6MFYhCidRT9aj9nOjD5hO2ybyacld5Ldumfu4cTlz6gqPQsrs9aMThfMMEU2QSWjMoQhFqWzexCwpaffkQu' }}
@@ -434,12 +443,13 @@ const styles = StyleSheet.create({
   },
   bodyImageContainer: {
     width: '100%',
-    aspectRatio: 2 / 3,
     paddingVertical: 12,
+    minHeight: 420,
   },
   bodyImageWrapper: {
     flex: 1,
     backgroundColor: '#000000',
+    paddingVertical: 4,
   },
   bodyImage: {
     width: '100%',
@@ -453,6 +463,7 @@ const styles = StyleSheet.create({
   },
   compareCol: {
     flex: 1,
+    paddingHorizontal: 4,
   },
   compareLabel: {
     color: '#94a3b8',
@@ -468,6 +479,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#71717a',
     marginBottom: 16,
+  },
+  compareImageBox: {
+    flex: 1,
+    aspectRatio: 3 / 4,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#0b0f14',
+  },
+  compareSingleBox: {
+    width: '100%',
+    aspectRatio: 3 / 4,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#0b0f14',
   },
   photoButtonsRow: {
     flexDirection: 'row',
