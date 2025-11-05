@@ -69,7 +69,26 @@ You are a fitness body recomposition visualizer. Given a real full-body photo, g
       horizon
     )} if they ${scenarioText(
       scenario
-    )}. Preserve face, skin tone, pose, clothing style and environment. Avoid unrealistic proportions. Subtle, science-guided changes only. ${statsText}\n\nRules:\n- Maintain identity and background.\n- Adjust body composition plausibly.\n- No text or watermarks.\n- Photo-realistic, studio quality.\n- If unsure, return an extremely subtle edit that keeps the original intact.\n- Reject and do not alter if the input appears underage or revealing.`;
+    )}.
+
+${statsText}
+
+STRICT VISUAL RULES:
+- Preserve identity perfectly: same face, facial features, skin tone, hair
+- Keep pose, clothing style, camera angle, framing, and background unchanged
+- Apply scientifically plausible body composition changes only, proportional to the timeline
+- Magnitude guidance: subtle at 2w, moderate at 1m, clearly noticeable at 3m
+- Recomposition details: realistic fat loss (abdomen/hips/thighs), improved muscle definition (arms/shoulders/chest/back/legs)
+- Photo quality: photo-realistic, clean lighting, minimal artifacts
+
+WATERMARK/TEXT POLICY:
+- Do NOT add any text, logos, brand marks, or watermarks
+- If ANY watermark/text is present or would be produced, REMOVE it cleanly and reconstruct the underlying pixels naturally
+
+SAFETY:
+- Only edit fully clothed adults; if unsure, produce an extremely subtle, safe edit preserving the original
+
+Return only the edited image.`;
 
     const doRequest = async (img: string, prompt: string) => {
       console.log('[FutureVisualizer] request start');

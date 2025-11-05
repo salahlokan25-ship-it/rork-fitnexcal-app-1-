@@ -88,7 +88,7 @@ export default function FutureVisualizerScreen() {
           }
 
           let horizon: '2w' | '1m' | '3m' = '3m';
-          if (timeline === '3-months') horizon = '1m';
+          if (timeline === '3-months') horizon = '3m';
           else if (timeline === '6-months') horizon = '3m';
           else if (timeline === '12-months') horizon = '3m';
 

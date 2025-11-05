@@ -64,7 +64,7 @@ export async function generateFutureBodyVisualization(params: VisualizationParam
           .join(', ')}.`
       : '';
 
-    const basePrompt = `You are an advanced fitness body transformation visualizer AI. Create a highly realistic prediction showing the SAME person ${horizonText(
+    const basePrompt = `You are an advanced fitness body transformation visualizer AI. Create a highly realistic prediction of the SAME person ${horizonText(
       horizon
     )} if they ${scenarioText(
       scenario
@@ -72,21 +72,25 @@ export async function generateFutureBodyVisualization(params: VisualizationParam
 
 ${statsText}
 
-CRITICAL REQUIREMENTS:
-- Preserve the person's identity: exact same face, facial features, skin tone, hair, and overall appearance
-- Keep the same pose, clothing style, and background environment
-- Apply scientifically accurate body composition changes based on the timeline and nutritional/training scenario
-- Make noticeable but realistic changes to body fat percentage, muscle definition, and overall physique
-- Changes should be progressive: subtle for 2 weeks, moderate for 1 month, significant for 3 months
-- Focus on realistic body recomposition: fat loss in problem areas (abdomen, hips, thighs), increased muscle definition in arms, shoulders, chest, legs
-- For weight loss: reduce body fat, show more muscle definition, slightly leaner face, more visible abs and muscle striations
-- For muscle gain: increase muscle size in major muscle groups, broader shoulders, bigger arms, more defined chest and back
-- NO text, watermarks, logos, or branding on the image
-- Photo-realistic quality with professional studio lighting
-- Maintain safety: only process fully clothed adults in appropriate poses
-- If input is inappropriate or unclear, return a very subtle edit
+STRICT VISUAL RULES:
+- Preserve identity perfectly: same face, facial features, skin tone, hair, and general appearance
+- Keep pose, clothing style, camera angle, framing, and background environment unchanged
+- Apply scientifically plausible body composition changes only, based on scenario and timeline
+- Magnitude guidance: very subtle at 2 weeks, moderate at 1 month, clearly noticeable at 3 months
+- Recomposition details: realistic fat loss (abdomen/hips/thighs), improved muscle definition (arms/shoulders/chest/back/legs)
+- Weight-loss focus: slightly leaner face, reduced abdominal volume, more visible definition (not exaggerated)
+- Muscle-gain focus: proportional hypertrophy in major muscle groups, broader shoulders and back, improved posture without cartoonish size
+- Photographic quality: photo-realistic, clean lighting, no artifacts
 
-Generate a clean, professional body transformation image without any watermarks or text overlays.`;
+WATERMARK/TEXT POLICY:
+- Do NOT add any text, logos, brand marks, or watermarks
+- If ANY watermark or text is present in the input or would be produced, REMOVE it cleanly and reconstruct underlying pixels to look natural
+
+SAFETY:
+- Only edit fully clothed adults in appropriate poses
+- If the input is inappropriate or unclear, return an extremely subtle, safe edit that preserves the original
+
+Return only the edited image.`;
 
     const doRequest = async (img: string, prompt: string) => {
       console.log('[FutureVisualizer] request start');
