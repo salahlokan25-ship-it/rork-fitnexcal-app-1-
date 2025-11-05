@@ -49,7 +49,7 @@ export default function PlanScreen() {
             testID="plan-hero-image"
             source={{
               uri:
-                'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/1fpycg1leyfjbn8mrrg54',
+                'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/v5l8op2w8x7gqkjr35j60',
             }}
             contentFit="cover"
             style={styles.heroImage}
@@ -98,7 +98,7 @@ export default function PlanScreen() {
             onPressOut={onPressOut}
             onPress={() => {
               console.log('[PlanScreen] Create My Plan pressed');
-              router.push('/paywall');
+              router.push('/log-in');
             }}
             testID="create-plan-button"
           >
