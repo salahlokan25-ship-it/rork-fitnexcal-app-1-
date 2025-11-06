@@ -30,20 +30,38 @@ const PLANS = [
     price: '$9.99',
     period: '/month',
     popular: false,
+    tier: 'Standard' as const,
   },
   {
     id: 'yearly',
-    title: 'Yearly',
+    title: 'Annual',
     price: '$59.99',
     period: '/year',
     popular: true,
-    savings: 'Save 50%',
+    savings: 'Best value',
+    tier: 'Standard' as const,
+  },
+  {
+    id: 'premium-monthly',
+    title: 'Premium Monthly',
+    price: '$14.99',
+    period: '/month',
+    popular: false,
+    tier: 'Premium' as const,
+  },
+  {
+    id: 'premium-yearly',
+    title: 'Premium Annual',
+    price: '$99.99',
+    period: '/year',
+    popular: false,
+    tier: 'Premium' as const,
   }
 ];
 
 export default function PaywallScreen() {
   const { upgradeToPremium } = useUser();
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly' | 'premium-monthly' | 'premium-yearly'>('yearly');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleSubscribe = async () => {
@@ -96,6 +114,7 @@ export default function PaywallScreen() {
 
         <View style={styles.plansContainer}>
           <Text style={styles.plansTitle}>Choose Your Plan</Text>
+          <Text style={styles.freeTierNote}>Free tier available with limited features</Text>
           
           {PLANS.map((plan) => (
             <TouchableOpacity
@@ -107,12 +126,17 @@ export default function PaywallScreen() {
               ]}
               onPress={() => {
                 console.log('[Paywall] Plan selected', plan.id);
-                setSelectedPlan(plan.id as 'monthly' | 'yearly');
+                setSelectedPlan(plan.id as typeof selectedPlan);
               }}
             >
               {plan.popular && (
                 <View style={styles.popularBadge}>
                   <Text style={styles.popularText}>Most Popular</Text>
+                </View>
+              )}
+              {plan.tier === 'Premium' && (
+                <View style={[styles.popularBadge, { backgroundColor: '#8B5CF6', right: 20, left: 'auto' }]}> 
+                  <Text style={styles.popularText}>Premium</Text>
                 </View>
               )}
               
@@ -267,7 +291,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 4,
+  },
+  freeTierNote: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
+    textAlign: 'center',
+    marginBottom: 16,
   },
   planCard: {
     backgroundColor: 'white',
