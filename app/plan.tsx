@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useCallback } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Platform } from 'react-native';
 import { Image } from 'expo-image';
@@ -20,21 +20,10 @@ const FEATURES: Feature[] = [
   { id: 'goals', title: 'Smart Goal Setting', description: 'Let our AI help you set and adjust realistic goals.', icon: Goal },
 ];
 
-type PlanKey = 'monthly' | 'annual' | 'premium-monthly' | 'premium-annual';
-
-const PLAN_PRICING: Record<PlanKey, { title: string; price: string; note: string; badge?: string }> = {
-  monthly: { title: 'Monthly', price: '$9.99', note: '/month' },
-  annual: { title: 'Annual', price: '$59.99', note: '/year', badge: 'Most Popular' },
-  'premium-monthly': { title: 'Premium Monthly', price: '$14.99', note: '/month' },
-  'premium-annual': { title: 'Premium Annual', price: '$99.99', note: '/year' },
-};
-
 export default function PlanScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scale = useRef(new Animated.Value(1)).current;
-
-  const [selected, setSelected] = useState<PlanKey>('annual');
 
   const onPressIn = () => {
     Animated.spring(scale, { toValue: 0.98, useNativeDriver: true, speed: 40, bounciness: 6 }).start();
@@ -45,13 +34,6 @@ export default function PlanScreen() {
 
   const styles = useMemo(() => createStyles(), []);
   console.log('[PlanScreen] render');
-
-  const onSelect = useCallback((key: PlanKey) => {
-    console.log('[PlanScreen] select plan', key);
-    setSelected(key);
-  }, []);
-
-  const selectedPlan = PLAN_PRICING[selected];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom - 6, 0) }]} testID="plan-container">
@@ -67,22 +49,14 @@ export default function PlanScreen() {
             testID="plan-hero-image"
             source={{
               uri:
-                'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rjd1ufj7f6cgcp251ckqk',
+                'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/1fpycg1leyfjbn8mrrg54',
             }}
             contentFit="cover"
             style={styles.heroImage}
             accessible
             accessibilityLabel="Abstract AI food orbit illustration"
           />
-          <View style={styles.crownWrap}>
-              <Image
-                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rff1g14cqdaitsy65qwit' }}
-                style={styles.crown}
-                contentFit="contain"
-                accessibilityLabel="Premium crown"
-              />
-            </View>
-            <View style={styles.pagerDots}>
+          <View style={styles.pagerDots}>
             <View style={[styles.dot, styles.dotActive]} />
             <View style={[styles.dot, styles.dotInactive]} />
             <View style={[styles.dot, styles.dotInactive]} />
@@ -113,36 +87,7 @@ export default function PlanScreen() {
           })}
         </View>
 
-        <View style={styles.planPicker}>
-          {(Object.keys(PLAN_PRICING) as PlanKey[]).map((key) => {
-            const p = PLAN_PRICING[key];
-            const active = key === selected;
-            return (
-              <TouchableOpacity
-                key={key}
-                onPress={() => onSelect(key)}
-                activeOpacity={0.9}
-                style={[styles.planCard, active ? styles.planCardActive : null]}
-                testID={`plan-card-${key}`}
-              >
-                <View style={styles.planCardTop}>
-                  <Text style={[styles.planTitle, active ? styles.planTitleActive : null]}>{p.title}</Text>
-                  <View style={styles.planPriceRow}>
-                    <Text style={[styles.planPrice, active ? styles.planPriceActive : null]}>{p.price}</Text>
-                    <Text style={[styles.planNote, active ? styles.planNoteActive : null]}>{p.note}</Text>
-                  </View>
-                </View>
-                {p.badge ? (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{p.badge}</Text>
-                  </View>
-                ) : null}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <View style={{ height: 140 }} />
+        <View style={{ height: 180 }} />
       </ScrollView>
 
       <View style={styles.footer} testID="plan-footer">
@@ -152,39 +97,22 @@ export default function PlanScreen() {
             onPressIn={onPressIn}
             onPressOut={onPressOut}
             onPress={() => {
-              const target = `/sign-up?plan=${encodeURIComponent(selected)}`;
-              console.log('[PlanScreen] Start Free Trial pressed', target);
-              router.push(target as never);
+              console.log('[PlanScreen] Create My Plan pressed');
+              router.push('/paywall');
             }}
-            testID="start-trial-button"
+            testID="create-plan-button"
           >
             <View style={styles.ctaBtn}> 
-              <Text style={styles.ctaText}>Start Free Trial</Text>
+              <Text style={styles.ctaText}>Create My Plan</Text>
             </View>
           </TouchableOpacity>
         </Animated.View>
-
-        <TouchableOpacity
-          onPress={() => {
-            console.log('[PlanScreen] continue with free tier');
-            router.replace('/(tabs)/home');
-          }}
-          activeOpacity={0.8}
-          testID="continue-free-tier"
-        >
-          <View style={styles.secondaryBtn}>
-            <Text style={styles.secondaryBtnText}>Continue with limited features</Text>
-          </View>
-        </TouchableOpacity>
 
         <View style={styles.prices}>
           <Text style={styles.priceText}>Monthly subscription: US $9.99</Text>
           <Text style={styles.priceText}>Annual subscription: US $59.99</Text>
           <Text style={styles.priceText}>Premium upgrade: Monthly US $14.99, Annual US $99.99</Text>
           <Text style={styles.priceText}>Free tier available with limited features to drive adoption</Text>
-          <Text style={styles.trialNote}>
-            7-day free trial, then {selectedPlan.price}/{selectedPlan.note.replace('/', '')}
-          </Text>
         </View>
 
         <TouchableOpacity
@@ -212,17 +140,7 @@ const createStyles = () =>
       borderBottomRightRadius: 18,
       overflow: 'hidden',
     },
-    heroImage: { width: '100%', height: 220, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 },
-    crownWrap: {
-      position: 'absolute',
-      top: 12,
-      left: 0,
-      right: 0,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    crown: { width: 56, height: 56, opacity: 0.95 },
-
+    heroImage: { width: '100%', height: 260 },
     pagerDots: {
       alignItems: 'center',
       justifyContent: 'center',
@@ -277,40 +195,6 @@ const createStyles = () =>
     featureTitle: { color: Theme.colors.text, fontSize: 16, fontWeight: '700' },
     featureDesc: { marginTop: 3, color: Theme.colors.textMuted, fontSize: 13 },
 
-    planPicker: { paddingHorizontal: 16, paddingTop: 16, gap: 12 as unknown as number },
-    planCard: {
-      backgroundColor: Theme.colors.surface,
-      borderRadius: 16,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: Theme.colors.cardBorder,
-    },
-    planCardActive: {
-      borderColor: Theme.colors.primary500,
-      shadowColor: Theme.colors.cardShadow,
-      shadowOpacity: Platform.OS === 'web' ? 0.2 : 0.35,
-      shadowOffset: { width: 0, height: 8 },
-      shadowRadius: 14,
-    },
-    planCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    planTitle: { color: Theme.colors.text, fontSize: 16, fontWeight: '700' },
-    planTitleActive: { color: '#FFFFFF' },
-    planPriceRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 6 as unknown as number },
-    planPrice: { color: Theme.colors.textMuted, fontSize: 22, fontWeight: '800' },
-    planPriceActive: { color: '#FFFFFF' },
-    planNote: { color: Theme.colors.textMuted, fontSize: 12 },
-    planNoteActive: { color: Theme.colors.primary300 },
-    badge: {
-      position: 'absolute',
-      top: -10,
-      left: 14,
-      backgroundColor: Theme.colors.primary,
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 999,
-    },
-    badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-
     footer: {
       position: 'absolute',
       left: 0,
@@ -334,21 +218,8 @@ const createStyles = () =>
     },
     ctaText: { color: '#fff', fontSize: 16, fontWeight: '800' },
 
-    secondaryBtn: {
-      marginTop: 10,
-      paddingVertical: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: Theme.colors.border,
-      backgroundColor: Theme.colors.surface,
-    },
-    secondaryBtnText: { color: Theme.colors.text, fontSize: 14, fontWeight: '700' },
-
     prices: { paddingTop: 12, gap: 6 as unknown as number, alignItems: 'center' },
     priceText: { color: 'rgba(255,255,255,0.65)', fontSize: 12, textAlign: 'center' },
-    trialNote: { marginTop: 4, color: '#9DB7FF', fontSize: 12, textAlign: 'center', fontWeight: '700' },
 
     loginLinkWrap: { paddingTop: 10, alignItems: 'center' },
     loginLink: { color: '#9DB7FF', fontSize: 14, fontWeight: '600' },
