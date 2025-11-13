@@ -484,7 +484,7 @@ export const [NutritionProvider, useNutrition] = createContextHook(() => {
 
   useEffect(() => {
     void recalcWeeklySummary();
-  }, [dailyNutrition, weeklySettings, recalcWeeklySummary]);
+  }, []);
 
   const clearHealthAlerts = useCallback(() => {
     setHealthAlerts([]);

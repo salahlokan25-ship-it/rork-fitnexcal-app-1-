@@ -74,7 +74,7 @@ export default function DashboardScreen() {
     if (user?.goal_calories && dailyNutrition?.goal_calories && user.goal_calories !== dailyNutrition.goal_calories) {
       updateGoalCalories(user.goal_calories);
     }
-  }, [user?.goal_calories, dailyNutrition?.goal_calories, updateGoalCalories]);
+  }, [user?.goal_calories]);
 
   useEffect(() => {
     if (dailyNutrition && dailyNutrition.meals.length > 0) {
