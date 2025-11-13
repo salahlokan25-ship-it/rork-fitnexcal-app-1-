@@ -250,7 +250,7 @@ export default function MindfulEatingScreen() {
 
   useEffect(() => {
     reloadTrack();
-  }, [audioChoice, reloadTrack]);
+  }, [audioChoice]);
 
   const toggleRun = useCallback(() => {
     setRunning((v) => !v);
